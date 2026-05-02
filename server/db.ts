@@ -325,16 +325,32 @@ export async function getDashboardData(filters: {
       .where(whereClause ? and(whereClause, eq(students.status, "Enrolled")) : eq(students.status, "Enrolled"));
     const enrolled = enrolledResult[0]?.count ?? 0;
 
-    // Seats reserved and available
-    const seatsData = await db
-      .select({
-        totalCapacity: sql<number>`SUM(capacity)`,
-        totalReserved: sql<number>`SUM(reservedSeats)`,
-      })
-      .from(seats);
+    // Seats reserved and available - using seat_master as source of truth
+    const { seatMaster } = await import("../drizzle/schema");
+    const seatMasterData = await db.select().from(seatMaster);
     
-    const seatsReserved = seatsData[0]?.totalReserved ?? 0;
-    const totalCapacity = seatsData[0]?.totalCapacity ?? 0;
+    let totalCapacity = 0;
+    let seatsReserved = 0;
+    
+    for (const seat of seatMasterData) {
+      totalCapacity += seat.capacity;
+      
+      // Count students with seatReserved = TRUE matching this seat
+      const reservedCount = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(students)
+        .where(
+          and(
+            eq(students.school, seat.school),
+            eq(students.grade, seat.grade),
+            eq(students.section, seat.section),
+            eq(students.seatReserved, true)
+          )
+        );
+      
+      seatsReserved += reservedCount[0]?.count ?? 0;
+    }
+    
     const seatsAvailable = totalCapacity - seatsReserved;
 
     // Daily registrations
