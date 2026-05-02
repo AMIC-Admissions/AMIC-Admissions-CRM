@@ -78,35 +78,53 @@ export async function applySeatMasterMigration() {
   try {
     const db = (await getDb()) as any;
     
-    // Check if table exists
-    const tableExists = await db.execute(
-      sql`SELECT COUNT(*) as count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seat_master'`
-    );
-    
-    if (!tableExists || tableExists.length === 0) {
-      return { success: false, message: "seat_master table does not exist. Run migration first." };
+    if (!db) {
+      return { success: false, message: "Database connection unavailable" };
     }
     
-    // Clear existing data
-    await db.delete(seatMaster).execute();
+    // Try to truncate existing data
+    try {
+      await db.execute(sql`TRUNCATE TABLE seat_master`);
+      console.log("Truncated existing seat_master data");
+    } catch (e: any) {
+      console.log("seat_master table not found or cannot truncate, proceeding with insert");
+    }
     
     // Insert all records
+    let insertedCount = 0;
     for (const record of SEAT_MASTER_DATA) {
-      await db.insert(seatMaster).values(record);
+      try {
+        await db.insert(seatMaster).values(record);
+        insertedCount++;
+      } catch (e: any) {
+        console.error(`Error inserting record: ${JSON.stringify(record)}`, e);
+        // Continue with next record
+      }
     }
     
     // Verify insertion
-    const count = await db.select().from(seatMaster);
+    let verifyCount = 0;
+    try {
+      const result = await db.select().from(seatMaster);
+      verifyCount = result ? result.length : 0;
+    } catch (e) {
+      console.error("Error verifying seat_master data:", e);
+    }
     
     return {
-      success: true,
-      message: `Seat Master migration completed. Inserted ${count.length} records.`,
-      recordCount: count.length,
+      success: verifyCount > 0,
+      message: verifyCount > 0 
+        ? `Seat Master migration completed. Inserted ${verifyCount} records.`
+        : `Failed to insert records. Attempted: ${insertedCount}, Verified: ${verifyCount}`,
+      recordCount: verifyCount,
       expectedCount: SEAT_MASTER_DATA.length,
     };
   } catch (error) {
     console.error("Error applying Seat Master migration:", error);
-    throw error;
+    return {
+      success: false,
+      message: `Migration failed: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 }
 
@@ -114,9 +132,17 @@ export async function getSeatMasterStatus() {
   try {
     const db = (await getDb()) as any;
     
+    if (!db) {
+      return {
+        status: "unavailable",
+        message: "Database connection unavailable",
+        recordCount: 0,
+      };
+    }
+    
     const allSeats = await db.select().from(seatMaster);
     
-    if (allSeats.length === 0) {
+    if (!allSeats || allSeats.length === 0) {
       return {
         status: "empty",
         message: "Seat Master table exists but is empty",
@@ -145,6 +171,10 @@ export async function getSeatMasterStatus() {
     };
   } catch (error) {
     console.error("Error getting Seat Master status:", error);
-    throw error;
+    return {
+      status: "error",
+      message: `Error checking status: ${error instanceof Error ? error.message : String(error)}`,
+      recordCount: 0,
+    };
   }
 }

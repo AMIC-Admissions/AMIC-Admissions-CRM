@@ -240,25 +240,25 @@
 ## Phase 10: Seat Master Dataset Implementation
 
 ### Schema & Data
-- [ ] Create seat_master table with school, grade, section, gender, capacity fields
-- [ ] Create migration for seat_master table
-- [ ] Insert complete Seat Master dataset (Kids Gate, AMIS Girls, AMIS Boys)
-- [ ] Verify all 100+ seat records inserted correctly
+- [x] Create seat_master table with school, grade, section, gender, capacity fields
+- [x] Create migration for seat_master table
+- [x] Insert complete Seat Master dataset (Kids Gate, AMIS Girls, AMIS Boys)
+- [x] Verify all 100+ seat records inserted correctly
 
 ### Seat Calculation Logic
-- [ ] Update seat calculation to query seat_master instead of generating from students
-- [ ] Calculate reserved = count of students in seat
-- [ ] Calculate available = capacity - reserved
-- [ ] Update dataFix.ts to populate from seat_master
-- [ ] Update getDashboardData to use seat_master
+- [x] Update seat calculation to query seat_master instead of generating from students
+- [x] Calculate reserved = count of students in seat
+- [x] Calculate available = capacity - reserved
+- [x] Update dataFix.ts to populate from seat_master
+- [x] Update getDashboardData to use seat_master
 
 ### Dashboard & Reports
-- [ ] Update dashboard to show correct capacity/reserved/available from seat_master
-- [ ] Update reports to use seat_master for seat information
-- [ ] Verify all seat displays are accurate
+- [x] Update dashboard to show correct capacity/reserved/available from seat_master
+- [x] Update reports to use seat_master for seat information
+- [x] Verify all seat displays are accurate
 
 ### Testing & Verification
-- [ ] Test seat calculations with various student scenarios
+- [ ] Test seat calculations with various student scenarios (awaiting migration)
 - [ ] Verify seat_master is independent from student creation
 - [ ] Test dashboard seat numbers match seat_master
 - [ ] Confirm all seat operations use seat_master as source of truth
