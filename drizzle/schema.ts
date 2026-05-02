@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -63,7 +63,8 @@ export type Seat = typeof seats.$inferSelect;
 export type InsertSeat = typeof seats.$inferInsert;
 
 /**
- * Students table for student management with section assignment.
+ * Students table for student management.
+ * NOTE: This is the OLD schema. After migration is applied, restore from schema-new.ts.backup
  */
 export const students = mysqlTable("students", {
   id: int("id").autoincrement().primaryKey(),
@@ -73,7 +74,7 @@ export const students = mysqlTable("students", {
   nationality: varchar("nationality", { length: 100 }),
   school: varchar("school", { length: 255 }).notNull(),
   grade: varchar("grade", { length: 255 }).notNull(),
-  section: varchar("section", { length: 10 }), // Auto-assigned based on gender and grade
+  section: varchar("section", { length: 10 }),
   status: mysqlEnum("status", ["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"]).default("Registered").notNull(),
   registrationDate: timestamp("registrationDate").defaultNow().notNull(),
   paymentStatus: mysqlEnum("paymentStatus", ["Pending", "Paid"]).default("Pending").notNull(),

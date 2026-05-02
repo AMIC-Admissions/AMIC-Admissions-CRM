@@ -342,10 +342,9 @@ export default function Home() {
       nationality: form.nationality,
       school: form.school,
       grade: form.grade,
-      registrationDate: new Date(form.registrationDate),
+      studentType: (form.studentType || "New") as "New" | "Re-Registration" | "Enrollment",
       paymentStatus: form.paymentStatus,
       paymentMethod: form.paymentMethod,
-      fileComplete: form.fileComplete,
     };
     if (form.id) updateStudent.mutate({ id: form.id, ...payload });
     else createStudent.mutate(payload);

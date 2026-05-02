@@ -4,6 +4,7 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_
 import { getDb, assignSection, reserveSeat, releaseSeat, shouldReserveSeat, getDashboardData } from "./db";
 import { generateReport, getReportFilterOptions } from "./reports";
 import { saveReportTemplate, getUserTemplates, getTemplate, deleteTemplate, updateTemplate } from "./reportTemplates";
+import { applyMigration0004, checkMigrationStatus } from "./migrations";
 import { ReportFilter, ReportFieldOption } from "@shared/reportTypes";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -497,6 +498,19 @@ export const appRouter = router({
           input.selectedFields as ReportFieldOption[]
         );
       }),
+  }),
+
+  admin: router({
+    // Migration endpoints
+    checkMigration: adminProcedure.query(async () => {
+      const status = await checkMigrationStatus();
+      return status;
+    }),
+
+    applyMigration: adminProcedure.mutation(async () => {
+      const result = await applyMigration0004();
+      return result;
+    }),
   }),
 });
 

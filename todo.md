@@ -119,3 +119,45 @@
 - [x] Implement report template saving
 - [x] Add pagination for large datasets (limit/offset)
 - [x] Add loading states and error handling
+
+
+## Phase 8: Student Data Model Upgrade (AJYAL AL-MAARIFA)
+
+### Database Schema Redesign
+- [ ] Expand students table with all required fields (DOB, nationality, fatherId, motherMobile, etc.)
+- [ ] Add computed columns for fileComplete and seatReserved logic
+- [ ] Create database migration for schema changes
+- [ ] Add validation constraints and indexes
+
+### Backend API Updates
+- [ ] Update createStudent procedure with all new fields
+- [ ] Update updateStudent procedure with validation
+- [ ] Add field-level validation (required fields, Yes/No booleans)
+- [ ] Implement fileComplete auto-calculation logic
+- [ ] Implement seatReserved auto-calculation logic
+- [ ] Update searchStudents to include new fields
+
+### Frontend Form UI Redesign
+- [ ] Create tabbed/sectioned student form (Student Info, Enrollment, Assessment, Payment, Documents, Parent Info)
+- [ ] Build Student Information section (Name, ID, DOB)
+- [ ] Build Personal Details section (Gender, Nationality)
+- [ ] Build Enrollment section (School, Grade, Student Type, Date of Join)
+- [ ] Build Assessment section (Assessment, Passed, Re-Assessment, Passed Re)
+- [ ] Build Status section (Registration, Enrollment, Transfer)
+- [ ] Build Payment section (1st/2nd Installment, Full Payment, Promissory Note, Tamara, JeelPay)
+- [ ] Build Documents section (Docs Signed, Requirements Submitted, File Complete display)
+- [ ] Build Parent/Guardian section (Father ID, Father Mobile, Mother ID, Mother Mobile)
+- [ ] Add form validation and error messages
+
+### Student List Table Update
+- [ ] Update table columns to show: Name, ID, School, Grade, Status, Payment Status, File Complete
+- [ ] Add calculated Payment Status column
+- [ ] Add sorting and filtering by key columns
+- [ ] Update edit modal to work with new schema
+
+### Integration & Testing
+- [ ] Update dashboard to work with new fields
+- [ ] Update reports module to support new fields
+- [ ] Update seat availability logic with new fields
+- [ ] Run full test suite
+- [ ] Test form validation and calculations

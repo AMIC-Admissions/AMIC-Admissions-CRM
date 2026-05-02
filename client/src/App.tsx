@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import SeatAvailability from "./pages/SeatAvailability";
 import Reports from "./pages/Reports";
+import AdminMigration from "./pages/AdminMigration";
 
 function Router() {
   return (
@@ -26,6 +27,9 @@ function Router() {
         <DashboardLayout>
           <Reports />
         </DashboardLayout>
+      </Route>
+      <Route path="/admin/migration" key="admin-migration">
+        <AdminMigration />
       </Route>
       <Route path="/404" key="not-found" component={NotFound} />
       <Route key="fallback" component={NotFound} />

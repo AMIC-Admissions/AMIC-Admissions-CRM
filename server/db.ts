@@ -452,3 +452,36 @@ export async function getDashboardData(filters: {
     };
   }
 }
+
+
+/**
+ * Calculate fileComplete status for a student
+ * File is complete only if BOTH docsSigned AND requirementsSubmitted are TRUE
+ */
+export function calculateFileComplete(docsSigned: boolean, requirementsSubmitted: boolean): boolean {
+  return docsSigned && requirementsSubmitted;
+}
+
+/**
+ * Calculate seatReserved status for a student
+ * Seat is reserved when:
+ * 1. Student Type is Re-Registration OR Enrollment
+ * OR
+ * 2. Any payment is completed (firstInstallment, fullPayment, promissoryNote, tamara, jeelPay)
+ */
+export function calculateSeatReservedNew(
+  studentType: string,
+  firstInstallment: boolean,
+  fullPayment: boolean,
+  promissoryNote: boolean,
+  tamara: boolean,
+  jeelPay: boolean
+): boolean {
+  // Check if student type qualifies for seat reservation
+  const typeQualifies = studentType === "Re-Registration" || studentType === "Enrollment";
+
+  // Check if any payment method is completed
+  const paymentCompleted = firstInstallment || fullPayment || promissoryNote || tamara || jeelPay;
+
+  return typeQualifies || paymentCompleted;
+}
