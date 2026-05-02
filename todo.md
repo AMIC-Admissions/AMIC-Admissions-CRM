@@ -161,3 +161,48 @@
 - [x] Update seat availability logic with new fields
 - [x] Run full test suite
 - [x] Test form validation and calculations
+
+
+## Phase 9: Data Consistency Fix & System Upgrade
+
+### Data Consistency Fix (CRITICAL - DO FIRST)
+- [ ] Create data mapping script to fix existing records
+- [ ] Set File Complete = docs_signed AND req_submitted
+- [ ] Set Seat Reserved based on student_type and payment fields
+- [ ] Recalculate Payment Status (Paid/Pending/Partial)
+- [ ] Rebuild seats table with correct reserved_seats counts
+- [ ] Backfill NULL values with FALSE for boolean fields
+- [ ] Validate enum values and normalize data
+- [ ] Verify dashboard numbers after fix
+- [ ] Confirm seats reserved > 0 and available calculated correctly
+
+### Authentication System
+- [ ] Create users table with id, username, password (hashed), role
+- [ ] Implement password hashing (bcrypt)
+- [ ] Add login page (/login) with username/password form
+- [ ] Implement JWT-based session management
+- [ ] Add role-based access control (Admin/Staff)
+- [ ] Protect all routes with authentication middleware
+- [ ] Create logout functionality
+
+### Navigation & Layout
+- [ ] Reorganize DashboardLayout with new navigation structure
+- [ ] Add navigation items: Dashboard, Students, Search & Edit, Seat Availability, Import/Export, Users (Admin only)
+- [ ] Create multi-page admin layout with sidebar
+- [ ] Add role-based menu visibility
+
+### Pages Implementation
+- [ ] Students page (/students) with table and add button
+- [ ] Search & Edit page (/search) with search and results
+- [ ] Seat Availability page (/seats) with filters
+- [ ] Import/Export page (/data) with upload and download
+- [ ] Users Management page (/users) - Admin only
+
+### System Integration & Testing
+- [ ] Test data consistency after fix
+- [ ] Verify all calculations work correctly
+- [ ] Test authentication and authorization
+- [ ] Test all page navigation and functionality
+- [ ] Verify seat logic and payment logic preserved
+- [ ] Run full test suite
+- [ ] Production readiness check

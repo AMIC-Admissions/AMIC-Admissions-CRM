@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import SeatAvailability from "./pages/SeatAvailability";
 import Reports from "./pages/Reports";
 import AdminMigration from "./pages/AdminMigration";
+import { AdminDataFix } from "./pages/AdminDataFix";
 
 function Router() {
   return (
@@ -30,6 +31,11 @@ function Router() {
       </Route>
       <Route path="/admin/migration" key="admin-migration">
         <AdminMigration />
+      </Route>
+      <Route path="/admin/data-fix" key="admin-data-fix">
+        <DashboardLayout>
+          <AdminDataFix />
+        </DashboardLayout>
       </Route>
       <Route path="/404" key="not-found" component={NotFound} />
       <Route key="fallback" component={NotFound} />

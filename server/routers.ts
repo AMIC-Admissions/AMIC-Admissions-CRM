@@ -535,6 +535,16 @@ export const appRouter = router({
       const result = await applyMigration0004();
       return result;
     }),
+
+    getDataStatus: adminProcedure.query(async () => {
+      const { getDataConsistencyStatus } = await import("./dataFix");
+      return await getDataConsistencyStatus();
+    }),
+
+    fixDataConsistency: adminProcedure.mutation(async () => {
+      const { runFullDataFix } = await import("./dataFix");
+      return await runFullDataFix();
+    }),
   }),
 });
 
