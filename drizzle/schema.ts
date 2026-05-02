@@ -87,3 +87,20 @@ export const students = mysqlTable("students", {
 
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = typeof students.$inferInsert;
+
+/**
+ * Report templates table for saving custom report configurations.
+ */
+export const reportTemplates = mysqlTable("report_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  filters: text("filters").notNull(), // JSON string
+  selectedFields: text("selectedFields").notNull(), // JSON string
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReportTemplate = typeof reportTemplates.$inferSelect;
+export type InsertReportTemplate = typeof reportTemplates.$inferInsert;

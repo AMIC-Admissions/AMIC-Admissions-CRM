@@ -3,6 +3,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb, assignSection, reserveSeat, releaseSeat, shouldReserveSeat, getDashboardData } from "./db";
 import { generateReport, getReportFilterOptions } from "./reports";
+import { saveReportTemplate, getUserTemplates, getTemplate, deleteTemplate, updateTemplate } from "./reportTemplates";
+import { ReportFilter, ReportFieldOption } from "@shared/reportTypes";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
@@ -428,6 +430,73 @@ export const appRouter = router({
     getReportFilterOptions: adminProcedure.query(async () => {
       return await getReportFilterOptions();
     }),
+
+    // Save a report template
+    saveTemplate: adminProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          description: z.string().optional(),
+          filters: z.record(z.string(), z.any()).optional(),
+          selectedFields: z.array(z.string()),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return await saveReportTemplate(
+          ctx.user.id,
+          input.name,
+          input.description,
+          (input.filters as any) || {},
+          input.selectedFields as ReportFieldOption[]
+        );
+      }),
+
+    // Get all templates for current user
+    getTemplates: adminProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+      return await getUserTemplates(ctx.user.id);
+    }),
+
+    // Get a specific template
+    getTemplate: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return await getTemplate(ctx.user.id, input.id);
+      }),
+
+    // Delete a template
+    deleteTemplate: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        await deleteTemplate(ctx.user.id, input.id);
+        return { success: true };
+      }),
+
+    // Update a template
+    updateTemplate: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().min(1),
+          description: z.string().optional(),
+          filters: z.record(z.string(), z.any()).optional(),
+          selectedFields: z.array(z.string()),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return await updateTemplate(
+          ctx.user.id,
+          input.id,
+          input.name,
+          input.description,
+          (input.filters as any) || {},
+          input.selectedFields as ReportFieldOption[]
+        );
+      }),
   }),
 });
 
