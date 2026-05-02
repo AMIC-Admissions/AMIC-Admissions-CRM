@@ -262,3 +262,65 @@
 - [ ] Verify seat_master is independent from student creation
 - [ ] Test dashboard seat numbers match seat_master
 - [ ] Confirm all seat operations use seat_master as source of truth
+
+
+## Phase 11: Production-Ready System (CRITICAL)
+
+### Dashboard Calculation Fixes
+- [ ] Fix reserved_seats calculation using seat_master + students
+- [ ] Fix available_seats = capacity - reserved_seats
+- [ ] Ensure all classes appear even if empty
+- [ ] Fix payment method distribution (Cash, Bank Transfer, Card, Tamara, JeelPay)
+- [ ] Fix payment status aggregation (Paid, Pending, Partial)
+- [ ] Verify dashboard numbers are accurate
+- [ ] Add fallback for missing seat_master table
+
+### Professional Admin UI
+- [ ] Build sidebar navigation layout
+- [ ] Build header with user info and logout
+- [ ] Create responsive grid layout
+- [ ] Style cards and tables
+- [ ] Add breadcrumb navigation
+
+### Students Page (/students)
+- [ ] Create Students page component
+- [ ] Build students table with key columns
+- [ ] Add "Add Student" button
+- [ ] Integrate tabbed form modal
+- [ ] Add Import/Export buttons
+
+### Import/Export
+- [ ] Create Import page component
+- [ ] Build Excel upload with validation
+- [ ] Apply File Complete and Seat Reserved logic
+- [ ] Create Export functionality (Excel)
+- [ ] Test with sample data
+
+### Search & Edit
+- [ ] Add global search in header
+- [ ] Implement search by Name/ID/Mobile/Grade
+- [ ] Build edit modal with tabbed form
+- [ ] Trigger seat logic on update
+- [ ] Add validation
+
+### Seat Availability Page
+- [ ] Create Seat Availability page
+- [ ] Add School/Grade/Gender filters
+- [ ] Display Capacity/Reserved/Available
+- [ ] Show all classes from seat_master
+- [ ] Add real-time updates
+
+### Authentication & Users
+- [ ] Create login page
+- [ ] Implement JWT authentication
+- [ ] Create users management page (admin only)
+- [ ] Add role-based access control
+- [ ] Protect all routes
+
+### Final Testing
+- [ ] Test all dashboard calculations
+- [ ] Verify seat logic works correctly
+- [ ] Test payment calculations
+- [ ] Test authentication and authorization
+- [ ] Test all pages and features
+- [ ] Verify production build
