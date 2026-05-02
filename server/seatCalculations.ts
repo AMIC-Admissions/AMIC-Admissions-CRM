@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { students, seatMaster } from "../drizzle/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { SEAT_MASTER_DATA } from "./seatMasterData";
 
 /**
  * Get seat availability for all seats in seat_master
@@ -11,14 +12,14 @@ export async function getSeatAvailability() {
     const db = (await getDb()) as any;
 
     // Get all seats from seat_master
-    const allSeats = await db.select().from(seatMaster);
+    let allSeats = await db.select().from(seatMaster).catch(() => []);
 
+    // Fallback to hardcoded data if database is empty
     if (allSeats.length === 0) {
-      return {
-        success: false,
-        message: "Seat Master is empty. Run migration first.",
-        seats: [],
-      };
+      console.log("[SeatCalc] Using fallback hardcoded seat master data");
+      allSeats = SEAT_MASTER_DATA;
+    } else {
+      console.log("[SeatCalc] Using database seat master data");
     }
 
     // For each seat, count reserved students
@@ -69,17 +70,22 @@ export async function getSeatAvailabilityBySchool(school: string) {
   try {
     const db = (await getDb()) as any;
 
-    const schoolSeats = await db
+    let schoolSeats = await db
       .select()
       .from(seatMaster)
-      .where(eq(seatMaster.school, school));
+      .where(eq(seatMaster.school, school))
+      .catch(() => []);
 
+    // Fallback to hardcoded data
     if (schoolSeats.length === 0) {
-      return {
-        success: false,
-        message: `No seats found for school: ${school}`,
-        seats: [],
-      };
+      schoolSeats = SEAT_MASTER_DATA.filter((s: any) => s.school === school);
+      if (schoolSeats.length === 0) {
+        return {
+          success: false,
+          message: `No seats found for school: ${school}`,
+          seats: [],
+        };
+      }
     }
 
     const seatsWithAvailability = [];
@@ -129,17 +135,22 @@ export async function getSeatAvailabilityByGrade(grade: string) {
   try {
     const db = (await getDb()) as any;
 
-    const gradeSeats = await db
+    let gradeSeats = await db
       .select()
       .from(seatMaster)
-      .where(eq(seatMaster.grade, grade));
+      .where(eq(seatMaster.grade, grade))
+      .catch(() => []);
 
+    // Fallback to hardcoded data
     if (gradeSeats.length === 0) {
-      return {
-        success: false,
-        message: `No seats found for grade: ${grade}`,
-        seats: [],
-      };
+      gradeSeats = SEAT_MASTER_DATA.filter((s: any) => s.grade === grade);
+      if (gradeSeats.length === 0) {
+        return {
+          success: false,
+          message: `No seats found for grade: ${grade}`,
+          seats: [],
+        };
+      }
     }
 
     const seatsWithAvailability = [];
