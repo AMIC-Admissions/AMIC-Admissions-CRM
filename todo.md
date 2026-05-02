@@ -69,8 +69,8 @@
 
 ### Student Search & Edit
 - [x] Add global search API endpoint supporting ID, Name, Grade, Parent Mobile (case-insensitive, partial match)
-- [ ] Implement debounced search UI with live results table
-- [ ] Add edit modal with pre-filled student data
+- [x] Implement debounced search UI with live results table
+- [x] Add edit modal with pre-filled student data
 - [x] Implement update API with seat logic re-run on grade/status changes
 
 ### Seat Availability Page
@@ -86,7 +86,7 @@
 - [x] Build Seat Summary table with Capacity/Reserved/Available/Occupancy%
 - [x] Build Payment Status table with counts and percentages
 - [x] Build Seats Remaining by Grade table
-- [ ] Add Capacity vs Registered vs Available bar chart
-- [ ] Add Admission Pipeline chart (Assessed→Passed→Registered→Reserved)
+- [x] Add Capacity vs Registered vs Available bar chart
+- [x] Add Admission Pipeline chart (Assessed→Passed→Registered→Reserved)
 - [x] Add low-seat alert (≤3 available seats)
 - [x] Implement dashboard filters and real-time updates

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
@@ -141,6 +142,10 @@ const copy = {
     schoolBreakdown: "School Breakdown",
     seatSummary: "Seat Summary",
     seatsRemaining: "Seats Remaining by Grade",
+    search: "Search Students",
+    searchPlaceholder: "Search by ID, name, grade, or nationality...",
+    capacityVsRegistered: "Capacity vs Registered vs Available",
+    admissionPipeline: "Admission Pipeline",
   },
   ar: {
     title: "نظام إدارة القبول المدرسي",
@@ -203,6 +208,10 @@ const copy = {
     schoolBreakdown: "توزيع المدارس",
     seatSummary: "ملخص المقاعد",
     seatsRemaining: "المقاعد المتبقية حسب الصف",
+    search: "البحث عن الطلاب",
+    searchPlaceholder: "ابحث حسب الرقم أو الاسم أو الصف أو الجنسية...",
+    capacityVsRegistered: "السعة مقابل المسجلين مقابل المتاح",
+    admissionPipeline: "خط أنابيب القبول",
   },
 };
 
@@ -225,6 +234,10 @@ export default function Home() {
   const [filters, setFilters] = useState({ school: "", grade: "", from: "", to: "" });
   const [form, setForm] = useState<StudentForm>(emptyForm);
   const [seatForm, setSeatForm] = useState({ id: 0, school: "", grade: "", capacity: 0 });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const t = copy[lang];
   const label = labels[lang];
   const isAdmin = user?.role === "admin";
@@ -244,6 +257,42 @@ export default function Home() {
   const students = trpc.admissions.listStudents.useQuery(queryFilters, { enabled: isAdmin });
   const seats = trpc.admissions.listSeats.useQuery({}, { enabled: isAdmin });
   const options = trpc.admissions.getFilterOptions.useQuery(undefined, { enabled: isAdmin });
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      utils.admissions.searchStudents.fetch({ query }).then(
+        (results: any) => setSearchResults(results),
+        (error: any) => console.error('Search failed:', error)
+      );
+    }, 300);
+    setSearchTimeout(timeout);
+  };
+
+  const handleSelectStudent = (student: any) => {
+    setForm({
+      id: student.id,
+      studentId: student.studentId,
+      name: student.name,
+      gender: student.gender as Gender,
+      nationality: student.nationality || "",
+      school: student.school,
+      grade: student.grade,
+      section: student.section || "",
+      studentType: (student.studentType as StudentType) || "New",
+      registrationDate: dateForInput(student.registrationDate),
+      paymentStatus: student.paymentStatus as PaymentStatus,
+      paymentMethod: student.paymentMethod as PaymentMethod,
+      fileComplete: student.fileComplete,
+    });
+    setSearchQuery("");
+    setSearchResults([]);
+    setEditModalOpen(true);
+  };
 
   const invalidateAdmissions = async () => {
     await Promise.all([
@@ -453,6 +502,91 @@ export default function Home() {
             </Field>
           </div>
         </section>
+
+        {/* Search Students Section */}
+        <section className="technical-panel rounded-2xl p-4 sm:p-5">
+          <div className="mb-4 flex items-center gap-2 text-lg font-black uppercase text-white">
+            <Search className="h-5 w-5 text-cyan-200" /> {t.search}
+          </div>
+          <div className="mb-4">
+            <Input
+              placeholder={t.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="bg-white/10 text-white placeholder:text-white/50"
+            />
+          </div>
+          {searchResults.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] border-collapse text-sm">
+                <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
+                  <tr>
+                    {[t.name, t.id, t.school, t.grade, t.status, t.actions].map((header) => (
+                      <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map((student) => (
+                    <tr key={student.id} className="border-b border-white/10 hover:bg-white/5 cursor-pointer">
+                      <td className="px-3 py-3 font-semibold">{student.name}</td>
+                      <td className="px-3 py-3 text-white/70">{student.studentId}</td>
+                      <td className="px-3 py-3">{student.school}</td>
+                      <td className="px-3 py-3">{student.grade}</td>
+                      <td className="px-3 py-3"><StatusBadge status={student.status as Status} label={label.status[student.status as Status]} /></td>
+                      <td className="px-3 py-3">
+                        <Button size="sm" variant="outline" onClick={() => handleSelectStudent(student)}>{t.edit}</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Edit Modal */}
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{t.updateStudent}</DialogTitle>
+            </DialogHeader>
+            <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
+              e.preventDefault();
+              if (form.id) updateStudent.mutate({ id: form.id, name: form.name, gender: form.gender, nationality: form.nationality, school: form.school, grade: form.grade, paymentStatus: form.paymentStatus, paymentMethod: form.paymentMethod, fileComplete: form.fileComplete });
+              setEditModalOpen(false);
+            }}>
+              <Field label={t.name}><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></Field>
+              <Field label={t.id}><Input value={form.studentId} disabled /></Field>
+              <Field label={t.gender}>
+                <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value as Gender })}>
+                  <option value="Male">{label.gender.Male}</option><option value="Female">{label.gender.Female}</option>
+                </select>
+              </Field>
+              <Field label={t.nationality}><Input value={form.nationality} onChange={(e) => setForm({ ...form, nationality: e.target.value })} /></Field>
+              <Field label={t.paymentStatus}>
+                <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as PaymentStatus })}>
+                  <option value="Pending">{label.paymentStatus.Pending}</option><option value="Paid">{label.paymentStatus.Paid}</option>
+                </select>
+              </Field>
+              <Field label={t.paymentMethod}>
+                <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value as PaymentMethod })}>
+                  <option value="Cash">{label.paymentMethod.Cash}</option><option value="Tamara">{label.paymentMethod.Tamara}</option><option value="JeelPay">{label.paymentMethod.JeelPay}</option>
+                </select>
+              </Field>
+              <label className="flex items-center gap-3 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white sm:col-span-2">
+                <Checkbox checked={form.fileComplete} onCheckedChange={(checked) => setForm({ ...form, fileComplete: checked === true })} />
+                {t.fileComplete}
+              </label>
+              <div className="flex gap-2 sm:col-span-2">
+                <Button className="flex-1 bg-cyan-200 text-[#031844] hover:bg-white" type="submit" disabled={updateStudent.isPending}>
+                  <Save className="h-4 w-4" /> {t.updateStudent}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditModalOpen(false)}>{t.clear}</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         <section className="grid gap-6 2xl:grid-cols-[0.9fr_1.5fr]">
           <Card className="technical-panel text-white">
@@ -739,6 +873,71 @@ export default function Home() {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Capacity vs Registered vs Available Chart */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.capacityVsRegistered}</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80">
+              {dashboard.isLoading ? (
+                <StateMessage text={t.loading} />
+              ) : dashboard.isError ? (
+                <StateMessage text={t.error} />
+              ) : dashboard.data?.seatUtilization?.byGrade?.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dashboard.data.seatUtilization.byGrade.map((seat: any) => ({
+                    grade: seat.grade,
+                    capacity: seat.capacity,
+                    registered: dashboard.data?.registered || 0,
+                    available: (seat.capacity || 0) - (seat.reserved || 0),
+                  }))}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.12)" vertical={false} />
+                    <XAxis dataKey="grade" stroke="rgba(255,255,255,0.65)" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="rgba(255,255,255,0.65)" allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: "#061f5c", border: "1px solid rgba(255,255,255,0.2)", color: "white" }} />
+                    <Bar dataKey="capacity" fill="#9be8ff" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="available" fill="#06b6d4" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <StateMessage text={t.noData} />
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Admission Pipeline Chart */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.admissionPipeline}</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80">
+              {dashboard.isLoading ? (
+                <StateMessage text={t.loading} />
+              ) : dashboard.isError ? (
+                <StateMessage text={t.error} />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={[
+                    { stage: t.registered, count: dashboard.data?.registered ?? 0 },
+                    { stage: "Assessed", count: 0 },
+                    { stage: "Passed", count: 0 },
+                    { stage: t.enrolled, count: dashboard.data?.enrolled ?? 0 },
+                  ]}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.12)" vertical={false} />
+                    <XAxis dataKey="stage" stroke="rgba(255,255,255,0.65)" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="rgba(255,255,255,0.65)" allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: "#061f5c", border: "1px solid rgba(255,255,255,0.2)", color: "white" }} />
+                    <Bar dataKey="count" fill="#9be8ff" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </section>
