@@ -1,0 +1,43 @@
+{
+  "students": 1496,
+  "seatCapacities": 36,
+  "distinctStudentSchools": 3,
+  "distinctStudentGrades": 15,
+  "samples": [
+    {
+      "studentId": "2279069245",
+      "name": "Aymen Salih Ahmed",
+      "school": "AMIS Boys",
+      "grade": "Grade 12",
+      "status": "Registered"
+    },
+    {
+      "studentId": "2475045650",
+      "name": "Mouad Belaroug",
+      "school": "AMIS Girls",
+      "grade": "Grade 2",
+      "status": "Registered"
+    },
+    {
+      "studentId": "2526271313",
+      "name": "Youcef Remmache",
+      "school": "AMIS Girls",
+      "grade": "Grade 2",
+      "status": "Registered"
+    },
+    {
+      "studentId": "2585393990",
+      "name": "Mohmmed Ammar Abdelrahman Mohammed Aly Omar",
+      "school": "AMIS Girls",
+      "grade": "Grade 2",
+      "status": "Registered"
+    },
+    {
+      "studentId": "2474042500",
+      "name": "abdurhman mohammed ali",
+      "school": "AMIS Girls",
+      "grade": "Grade 2",
+      "status": "Registered"
+    }
+  ]
+}

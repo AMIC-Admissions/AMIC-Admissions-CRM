@@ -1,0 +1,26 @@
+# Project TODO
+
+- [x] Implement student management with add, edit, delete, and required fields: name, student ID, gender, nationality, school, grade, status, registration date, payment status, payment method, and file complete flag.
+- [x] Enforce strict admissions status progression from Registered to Assessed to Passed to Enrolled with no skipping and no reversal.
+- [x] Block enrollment when no seats are available for the student's selected school and grade.
+- [x] Implement payment tracking with only Paid or Pending statuses and only Cash, Tamara, and JeelPay payment methods.
+- [x] Build dashboard KPI cards for total students, registered, enrolled, seats reserved, and seats available.
+- [x] Build daily registrations bar chart.
+- [x] Build weekly comparison view for this week versus last week.
+- [x] Implement seat management capacity by school and grade.
+- [x] Auto-calculate registered, reserved, and available seats by school and grade.
+- [x] Display low-seat alert whenever available seats are 3 or fewer.
+- [x] Implement admin filters by date range, school, and grade.
+- [x] Implement full English and Arabic UI text support.
+- [x] Activate RTL layout only when Arabic language is selected.
+- [x] Implement mobile-first responsive interface for desktop and mobile screens.
+- [x] Apply professional architectural blueprint visual style with deep royal blue background, precise grid pattern, white technical line drawings, dimension markers, and structured typography.
+- [x] Protect all admin operations on the frontend.
+- [x] Protect all admin operations on the backend with role-based procedures.
+- [x] Use the provided admissions spreadsheet as a reference for initial school, grade, capacity, and student data where feasible.
+- [x] Add automated Vitest coverage for workflow progression, enrollment seat blocking, payment method restrictions, and admin-only backend operations.
+- [x] Run type checks, tests, and final status validation before delivery.
+- [x] Localize every remaining hardcoded UI string, toast, option label, badge, and status/payment/gender label so English and Arabic coverage is complete.
+- [x] Add explicit loading, error, and empty states for dashboard KPI cards, daily registrations chart, and weekly comparison instead of defaulting to misleading zeros or empty charts.
+- [x] Verify and document successful workbook-based seed import so initial spreadsheet-derived data is proven present.
+- [x] Add explicit loading, error, and empty-state UI for dashboard KPI cards instead of symbolic placeholders.
