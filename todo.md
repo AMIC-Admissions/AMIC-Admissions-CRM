@@ -90,3 +90,32 @@
 - [x] Add Admission Pipeline chart (Assessed→Passed→Registered→Reserved)
 - [x] Add low-seat alert (≤3 available seats)
 - [x] Implement dashboard filters and real-time updates
+
+
+## Phase 7: Advanced Reports Module
+
+### Backend API & Data Model
+- [x] Design report request/response types with Zod validation
+- [x] Create dynamic SQL query builder for flexible filtering
+- [x] Implement report generation tRPC procedure
+- [x] Add support for all filter categories (Student, Academic, Payment, Seat, Document)
+- [x] Optimize query performance with proper indexing
+
+### Frontend Reports Page
+- [x] Create /reports page component
+- [x] Build dynamic filter panel with collapsible sections
+- [x] Implement field selection checkboxes
+- [x] Add real-time report preview table
+- [x] Implement "Generate Report" button
+
+### Export Functionality
+- [x] Implement PDF export with clean layout
+- [x] Add PDF title and filter summary
+- [x] Implement Excel export (.xlsx)
+- [x] Add download buttons for both formats
+
+### Advanced Features
+- [x] Add quick filter templates (Unpaid Students, Incomplete Files, etc.)
+- [ ] Implement report template saving
+- [ ] Add pagination for large datasets
+- [ ] Add loading states and error handling

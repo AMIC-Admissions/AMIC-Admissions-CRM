@@ -1,10 +1,11 @@
-import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb, assignSection, reserveSeat, releaseSeat, shouldReserveSeat, getDashboardData } from "./db";
+import { generateReport, getReportFilterOptions } from "./reports";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { COOKIE_NAME } from "@shared/const";
 import { students, seats } from "../drizzle/schema";
 import { eq, and, sql, like } from "drizzle-orm";
 
@@ -162,23 +163,24 @@ export const appRouter = router({
 
         const currentStudent = student[0];
 
-        // Handle seat release on withdrawal
-        if (input.status === "Withdrawn" && currentStudent.seatReserved && currentStudent.section) {
-          await releaseSeat(currentStudent.school, currentStudent.grade, currentStudent.section);
+        // Handle seat release if status changed to Withdrawn
+        if (input.status === "Withdrawn" && currentStudent.seatReserved) {
+          await releaseSeat(currentStudent.school, currentStudent.grade, currentStudent.section!);
         }
 
-        // Update student
-        await db.update(students).set({
-          name: input.name || currentStudent.name,
-          gender: input.gender || currentStudent.gender,
-          nationality: input.nationality !== undefined ? input.nationality : currentStudent.nationality,
-          school: input.school || currentStudent.school,
-          grade: input.grade || currentStudent.grade,
-          status: input.status || currentStudent.status,
-          paymentStatus: input.paymentStatus || currentStudent.paymentStatus,
-          paymentMethod: input.paymentMethod || currentStudent.paymentMethod,
-          fileComplete: input.fileComplete !== undefined ? input.fileComplete : currentStudent.fileComplete,
-        }).where(eq(students.id, input.id));
+        // Build update object
+        const updateData: any = {};
+        if (input.name !== undefined) updateData.name = input.name;
+        if (input.gender !== undefined) updateData.gender = input.gender;
+        if (input.nationality !== undefined) updateData.nationality = input.nationality;
+        if (input.school !== undefined) updateData.school = input.school;
+        if (input.grade !== undefined) updateData.grade = input.grade;
+        if (input.status !== undefined) updateData.status = input.status;
+        if (input.paymentStatus !== undefined) updateData.paymentStatus = input.paymentStatus;
+        if (input.paymentMethod !== undefined) updateData.paymentMethod = input.paymentMethod;
+        if (input.fileComplete !== undefined) updateData.fileComplete = input.fileComplete;
+
+        await db.update(students).set(updateData).where(eq(students.id, input.id));
 
         return { success: true };
       }),
@@ -195,44 +197,29 @@ export const appRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Student not found" });
         }
 
-        const currentStudent = student[0];
-
         // Release seat if reserved
-        if (currentStudent.seatReserved && currentStudent.section) {
-          await releaseSeat(currentStudent.school, currentStudent.grade, currentStudent.section);
+        if (student[0].seatReserved) {
+          await releaseSeat(student[0].school, student[0].grade, student[0].section!);
         }
 
         await db.delete(students).where(eq(students.id, input.id));
+
         return { success: true };
       }),
 
-    // Get seats with utilization
-    listSeats: adminProcedure
-      .input(
-        z.object({
-          school: z.string().optional(),
-          grade: z.string().optional(),
-        })
-      )
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    // List seats with availability
+    listSeats: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        const conditions = [];
-        if (input.school) conditions.push(eq(seats.school, input.school));
-        if (input.grade) conditions.push(eq(seats.grade, input.grade));
+      const result = await db.select().from(seats);
+      return result.map((seat) => ({
+        ...seat,
+        available: (seat.capacity || 0) - (seat.reservedSeats || 0),
+      }));
+    }),
 
-        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-        const result = await db.select().from(seats).where(whereClause);
-
-        return result.map((seat) => ({
-          ...seat,
-          available: (seat.capacity || 0) - (seat.reservedSeats || 0),
-        }));
-      }),
-
-    // Get seat availability for a specific school, grade, and gender
+    // Get seat availability for a specific school/grade/gender
     getSeatAvailability: adminProcedure
       .input(
         z.object({
@@ -245,22 +232,11 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        // Get seats for this school and grade
         const seatsResult = await db
           .select()
           .from(seats)
           .where(and(eq(seats.school, input.school), eq(seats.grade, input.grade)));
 
-        if (seatsResult.length === 0) {
-          return {
-            capacity: 0,
-            reserved: 0,
-            available: 0,
-            sections: [],
-          };
-        }
-
-        // Calculate totals
         const totalCapacity = seatsResult.reduce((sum, s) => sum + (s.capacity || 0), 0);
         const totalReserved = seatsResult.reduce((sum, s) => sum + (s.reservedSeats || 0), 0);
         const totalAvailable = totalCapacity - totalReserved;
@@ -289,7 +265,7 @@ export const appRouter = router({
 
     // Get unique schools and grades for filters
     getFilterOptions: adminProcedure
-      .input(z.object({}).optional())
+      .input(z.void().optional())
       .query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
@@ -428,6 +404,30 @@ export const appRouter = router({
           alerts: totalAvailable <= 3 ? [{ type: "warning", message: "⚠️ Seats Almost Full" }] : [],
         };
       }),
+
+    // Generate report with dynamic filters and field selection
+    generateReport: adminProcedure
+      .input(
+        z.object({
+          filters: z.record(z.string(), z.any()).optional(),
+          selectedFields: z.array(z.string()),
+          limit: z.number().optional().default(1000),
+          offset: z.number().optional().default(0),
+        })
+      )
+      .query(async ({ input }) => {
+        return await generateReport(
+          (input.filters as any) || {},
+          input.selectedFields as any,
+          input.limit,
+          input.offset
+        );
+      }),
+
+    // Get filter options for report UI
+    getReportFilterOptions: adminProcedure.query(async () => {
+      return await getReportFilterOptions();
+    }),
   }),
 });
 

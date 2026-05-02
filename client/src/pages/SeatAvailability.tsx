@@ -83,7 +83,7 @@ export default function SeatAvailability() {
 
   const t = translations[language];
 
-  const filterOptions = trpc.admissions.getFilterOptions.useQuery({});
+  const filterOptions = trpc.admissions.getFilterOptions.useQuery(undefined);
         const seatAvailability = trpc.admissions.getSeatAvailability.useQuery(
     school && grade ? { school, grade, gender: gender === "all" ? undefined : gender } : { school: "", grade: "" }
   );

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { GraduationCap, LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { GraduationCap, LayoutDashboard, LogOut, PanelLeft, Users, FileText } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -31,6 +31,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/", id: "dashboard" },
   { icon: Users, label: "Students", path: "/", id: "students" },
   { icon: GraduationCap, label: "Seat Planning", path: "/seat-availability", id: "seats" },
+  { icon: FileText, label: "Reports", path: "/reports", id: "reports" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import SeatAvailability from "./pages/SeatAvailability";
+import Reports from "./pages/Reports";
 
 function Router() {
   return (
@@ -19,6 +20,11 @@ function Router() {
       <Route path="/seat-availability" key="seat-availability">
         <DashboardLayout>
           <SeatAvailability />
+        </DashboardLayout>
+      </Route>
+      <Route path="/reports" key="reports">
+        <DashboardLayout>
+          <Reports />
         </DashboardLayout>
       </Route>
       <Route path="/404" key="not-found" component={NotFound} />

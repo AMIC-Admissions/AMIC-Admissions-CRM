@@ -255,7 +255,7 @@ export default function Home() {
 
   const dashboard = trpc.admissions.getDashboard.useQuery(queryFilters, { enabled: isAdmin });
   const students = trpc.admissions.listStudents.useQuery(queryFilters, { enabled: isAdmin });
-  const seats = trpc.admissions.listSeats.useQuery({}, { enabled: isAdmin });
+  const seats = trpc.admissions.listSeats.useQuery(undefined, { enabled: isAdmin });
   const options = trpc.admissions.getFilterOptions.useQuery(undefined, { enabled: isAdmin });
   const handleSearch = (query: string) => {
     setSearchQuery(query);
