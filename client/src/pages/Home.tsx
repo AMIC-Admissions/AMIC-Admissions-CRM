@@ -138,6 +138,9 @@ const copy = {
     studentDeleted: "Student deleted",
     workflowAdvanced: "Workflow advanced",
     seatSaved: "Seat capacity saved",
+    schoolBreakdown: "School Breakdown",
+    seatSummary: "Seat Summary",
+    seatsRemaining: "Seats Remaining by Grade",
   },
   ar: {
     title: "نظام إدارة القبول المدرسي",
@@ -197,6 +200,9 @@ const copy = {
     studentDeleted: "تم حذف سجل الطالب",
     workflowAdvanced: "تم تقدم مرحلة القبول",
     seatSaved: "تم حفظ سعة المقاعد",
+    schoolBreakdown: "توزيع المدارس",
+    seatSummary: "ملخص المقاعد",
+    seatsRemaining: "المقاعد المتبقية حسب الصف",
   },
 };
 
@@ -582,6 +588,154 @@ export default function Home() {
                         <td className="px-3 py-3">{seat.available <= 3 ? <Badge variant="destructive">≤ 3</Badge> : <Badge variant="secondary">{t.ok}</Badge>}</td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* School Breakdown Table */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.schoolBreakdown || "School Breakdown"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] border-collapse text-sm">
+                  <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
+                    <tr>
+                      {[t.school, "Assessed", "Passed", t.registered, "Payment Methods", t.seatsReserved].map((header) => (
+                        <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.data?.seatUtilization?.bySchool?.map((school: any) => (
+                      <tr key={school.school} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="px-3 py-3 font-semibold">{school.school}</td>
+                        <td className="px-3 py-3">{school.assessed || 0}</td>
+                        <td className="px-3 py-3">{school.passed || 0}</td>
+                        <td className="px-3 py-3">{school.registered || 0}</td>
+                        <td className="px-3 py-3 text-xs">{school.paymentMethods?.join(", ") || "-"}</td>
+                        <td className="px-3 py-3">{school.seatsReserved || 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Seat Summary Table */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.seatSummary || "Seat Summary"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px] border-collapse text-sm">
+                  <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
+                    <tr>
+                      {[t.school, t.grade, t.capacity, t.seatsReserved, t.available, "Occupancy %"].map((header) => (
+                        <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.data?.seatUtilization?.byGrade?.map((seat: any) => {
+                      const available = (seat.capacity || 0) - (seat.reserved || 0);
+                      const occupancy = seat.capacity > 0 ? Math.round(((seat.reserved || 0) / seat.capacity) * 100) : 0;
+                      return (
+                        <tr key={`${seat.grade}`} className="border-b border-white/10 hover:bg-white/5">
+                          <td className="px-3 py-3 font-semibold">-</td>
+                          <td className="px-3 py-3">{seat.grade}</td>
+                          <td className="px-3 py-3">{seat.capacity}</td>
+                          <td className="px-3 py-3">{seat.reserved}</td>
+                          <td className="px-3 py-3 font-black text-cyan-100">{available}</td>
+                          <td className="px-3 py-3">{occupancy}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Payment Status Table */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.paymentStatus || "Payment Status"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px] border-collapse text-sm">
+                  <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
+                    <tr>
+                      {["Method", "Count", "Percentage", "Status"].map((header) => (
+                        <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.data?.paymentSummary && [
+                      { method: 'Cash', count: dashboard.data.paymentSummary.cash },
+                      { method: 'Tamara', count: dashboard.data.paymentSummary.tamara },
+                      { method: 'JeelPay', count: dashboard.data.paymentSummary.jeelPay },
+                    ].map((payment) => {
+                      const total = dashboard.data?.totalStudents || 1;
+                      const percentage = Math.round((payment.count / total) * 100);
+                      return (
+                        <tr key={payment.method} className="border-b border-white/10 hover:bg-white/5">
+                          <td className="px-3 py-3 font-semibold">{payment.method}</td>
+                          <td className="px-3 py-3">{payment.count}</td>
+                          <td className="px-3 py-3">{percentage}%</td>
+                          <td className="px-3 py-3"><Badge variant="default">Payment Method</Badge></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Seats Remaining by Grade */}
+        <section>
+          <Card className="technical-panel text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-black uppercase">{t.seatsRemaining || "Seats Remaining by Grade"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[500px] border-collapse text-sm">
+                  <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
+                    <tr>
+                      {[t.school, t.grade, t.capacity, t.seatsReserved, t.available].map((header: string) => (
+                        <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboard.data?.seatUtilization?.bySection?.map((section: any) => {
+                      const available = (section.capacity || 0) - (section.reserved || 0);
+                      return (
+                        <tr key={`${section.school}-${section.grade}-${section.section}`} className={cn("border-b border-white/10", available <= 3 && "bg-red-500/12")}>
+                          <td className="px-3 py-3 font-semibold">{section.school}</td>
+                          <td className="px-3 py-3">{section.grade}</td>
+                          <td className="px-3 py-3">{section.capacity}</td>
+                          <td className="px-3 py-3">{section.reserved}</td>
+                          <td className="px-3 py-3 font-black text-cyan-100">{available}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

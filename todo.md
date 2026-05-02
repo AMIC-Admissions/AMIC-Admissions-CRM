@@ -82,10 +82,10 @@
 
 ### Enhanced Professional Dashboard
 - [x] Add KPI cards: Total Students, Passed, Failed, Registered, Enrollment, Seats Reserved, Seats Available
-- [ ] Build School Breakdown table with Assessed/Passed/Registered/Payment methods/Seats columns
-- [ ] Build Seat Summary table with Capacity/Reserved/Available/Occupancy%
-- [ ] Build Payment Status table with counts and percentages
-- [ ] Build Seats Remaining by Grade table
+- [x] Build School Breakdown table with Assessed/Passed/Registered/Payment methods/Seats columns
+- [x] Build Seat Summary table with Capacity/Reserved/Available/Occupancy%
+- [x] Build Payment Status table with counts and percentages
+- [x] Build Seats Remaining by Grade table
 - [ ] Add Capacity vs Registered vs Available bar chart
 - [ ] Add Admission Pipeline chart (Assessed→Passed→Registered→Reserved)
 - [x] Add low-seat alert (≤3 available seats)
