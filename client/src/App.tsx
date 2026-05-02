@@ -10,6 +10,7 @@ import SeatAvailability from "./pages/SeatAvailability";
 import Reports from "./pages/Reports";
 import AdminMigration from "./pages/AdminMigration";
 import { AdminDataFix } from "./pages/AdminDataFix";
+import { AdminSeatMaster } from "./pages/AdminSeatMaster";
 
 function Router() {
   return (
@@ -35,6 +36,11 @@ function Router() {
       <Route path="/admin/data-fix" key="admin-data-fix">
         <DashboardLayout>
           <AdminDataFix />
+        </DashboardLayout>
+      </Route>
+      <Route path="/admin/seat-master" key="admin-seat-master">
+        <DashboardLayout>
+          <AdminSeatMaster />
         </DashboardLayout>
       </Route>
       <Route path="/404" key="not-found" component={NotFound} />

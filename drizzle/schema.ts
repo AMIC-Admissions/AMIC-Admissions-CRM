@@ -150,3 +150,22 @@ export const reportTemplates = mysqlTable("report_templates", {
 
 export type ReportTemplate = typeof reportTemplates.$inferSelect;
 export type InsertReportTemplate = typeof reportTemplates.$inferInsert;
+
+
+/**
+ * Seat Master table - Official source of truth for seat structure
+ * Contains all seats across all schools, grades, and sections
+ */
+export const seatMaster = mysqlTable("seat_master", {
+  id: int("id").autoincrement().primaryKey(),
+  school: varchar("school", { length: 100 }).notNull(), // Kids Gate, AMIS Girls, AMIS Boys
+  grade: varchar("grade", { length: 50 }).notNull(), // Pre-KG, KG I, KG II, Grade 1, etc.
+  section: varchar("section", { length: 10 }).notNull(), // A, B, C, D, E, F, Mixed
+  gender: varchar("gender", { length: 20 }).notNull(), // Female, Male, Mixed
+  capacity: int("capacity").notNull(), // Total seats in this section
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SeatMaster = typeof seatMaster.$inferSelect;
+export type InsertSeatMaster = typeof seatMaster.$inferInsert;

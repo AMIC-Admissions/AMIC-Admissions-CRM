@@ -545,6 +545,26 @@ export const appRouter = router({
       const { runFullDataFix } = await import("./dataFix");
       return await runFullDataFix();
     }),
+
+    applySeatMasterMigration: adminProcedure.mutation(async () => {
+      const { applySeatMasterMigration } = await import("./seatMasterMigration");
+      return await applySeatMasterMigration();
+    }),
+
+    getSeatMasterStatus: adminProcedure.query(async () => {
+      const { getSeatMasterStatus } = await import("./seatMasterMigration");
+      return await getSeatMasterStatus();
+    }),
+
+    getSeatAvailability: publicProcedure.query(async () => {
+      const { getSeatAvailability } = await import("./seatCalculations");
+      return await getSeatAvailability();
+    }),
+
+    getLowAvailabilitySeats: publicProcedure.query(async () => {
+      const { getLowAvailabilitySeats } = await import("./seatCalculations");
+      return await getLowAvailabilitySeats();
+    }),
   }),
 });
 

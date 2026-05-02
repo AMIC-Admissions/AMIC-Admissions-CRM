@@ -206,3 +206,59 @@
 - [ ] Verify seat logic and payment logic preserved
 - [ ] Run full test suite
 - [ ] Production readiness check
+
+
+## Phase 9B: Data Consistency & Logic Fix (CRITICAL)
+
+### Data Review & Fixes
+- [x] Review current data state: Seats Reserved, Available, Payments
+- [x] Fix Seats Reserved calculation (should be > 0 after fix)
+- [x] Fix Seats Available calculation (capacity - reserved)
+- [x] Verify payment distribution accuracy
+- [x] Confirm all tables populated correctly
+- [x] Check dashboard numbers match database
+
+### File Complete Logic Update
+- [x] Update File Complete for New Admission: require docs_signed AND req_submitted
+- [x] Update File Complete for other types: default to TRUE
+- [x] Update dataFix.ts with student-type-specific logic
+- [x] Add validation to prevent marking File Complete without docs for new students
+
+### UI Validation & Fields
+- [x] Show Docs Signed/Requirements fields for all types
+- [x] Mark fields optional for non-New Admission types
+- [x] Add validation in StudentFormTabs
+- [x] Update edit modal field visibility
+
+### Dashboard & Reports
+- [ ] Verify dashboard reflects correct File Complete counts
+- [ ] Verify reports use new logic
+- [ ] Test edge cases (withdrawn, partial payments, missing data)
+- [ ] Confirm all calculations are accurate
+
+
+## Phase 10: Seat Master Dataset Implementation
+
+### Schema & Data
+- [ ] Create seat_master table with school, grade, section, gender, capacity fields
+- [ ] Create migration for seat_master table
+- [ ] Insert complete Seat Master dataset (Kids Gate, AMIS Girls, AMIS Boys)
+- [ ] Verify all 100+ seat records inserted correctly
+
+### Seat Calculation Logic
+- [ ] Update seat calculation to query seat_master instead of generating from students
+- [ ] Calculate reserved = count of students in seat
+- [ ] Calculate available = capacity - reserved
+- [ ] Update dataFix.ts to populate from seat_master
+- [ ] Update getDashboardData to use seat_master
+
+### Dashboard & Reports
+- [ ] Update dashboard to show correct capacity/reserved/available from seat_master
+- [ ] Update reports to use seat_master for seat information
+- [ ] Verify all seat displays are accurate
+
+### Testing & Verification
+- [ ] Test seat calculations with various student scenarios
+- [ ] Verify seat_master is independent from student creation
+- [ ] Test dashboard seat numbers match seat_master
+- [ ] Confirm all seat operations use seat_master as source of truth

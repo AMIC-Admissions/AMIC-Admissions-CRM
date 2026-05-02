@@ -361,7 +361,11 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
           <Card className="border-slate-700 bg-slate-800">
             <CardHeader>
               <CardTitle>Document Status</CardTitle>
-              <CardDescription>Document submission and signing status</CardDescription>
+              <CardDescription>
+                {formData.studentType === "New Admission" 
+                  ? "Document submission and signing (REQUIRED for new students)" 
+                  : "Document status (optional for this type)"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -383,12 +387,27 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
                 </div>
               </div>
 
+              {formData.studentType === "New Admission" && (
+                <div className="p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg mb-4">
+                  <p className="text-xs text-yellow-200">
+                    ⚠️ Documents are REQUIRED for new admissions.
+                  </p>
+                </div>
+              )}
+              
               <div className="p-4 bg-slate-700 rounded-lg border border-slate-600">
                 <p className="text-sm text-slate-300">
-                  <strong>File Complete:</strong> {(formData.docsSigned && formData.requirementsSubmitted) ? "✓ Yes" : "✗ No"}
+                  <strong>File Complete:</strong>
+                  {formData.studentType === "New Admission" ? (
+                    <span className="ml-2">{(formData.docsSigned && formData.requirementsSubmitted) ? "✓ Yes" : "✗ No (requires both)"}</span>
+                  ) : (
+                    <span className="ml-2">✓ Auto (this type)</span>
+                  )}
                 </p>
                 <p className="text-xs text-slate-400 mt-2">
-                  File is complete when both documents are signed AND requirements are submitted.
+                  {formData.studentType === "New Admission" 
+                    ? "New Admission: File complete when BOTH documents are signed AND requirements are submitted."
+                    : "Other types: File automatically marked complete."}
                 </p>
               </div>
             </CardContent>

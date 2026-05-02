@@ -36,6 +36,13 @@
       "when": 1777740327409,
       "tag": "0004_chemical_prism",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1777748202970,
+      "tag": "0005_petite_puppet_master",
+      "breakpoints": true
     }
   ]
 }
