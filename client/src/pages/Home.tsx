@@ -276,13 +276,7 @@ export default function Home() {
 
 
 
-  const updateSeat = trpc.admissions.updateSeat.useMutation({
-    onSuccess: async () => {
-      toast.success(t.seatSaved);
-      await invalidateAdmissions();
-    },
-    onError: (error: any) => toast.error(error.message),
-  });
+
 
   const submitStudent = (event: FormEvent) => {
     event.preventDefault();
@@ -561,7 +555,7 @@ export default function Home() {
           <Card className="technical-panel text-white">
             <CardHeader><CardTitle className="text-xl font-black uppercase">{t.seats}</CardTitle></CardHeader>
             <CardContent>
-              <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); updateSeat.mutate(seatForm); }}>
+              <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); toast.info('Feature coming soon'); }}>
                 <Field label={t.school}><Input value={seatForm.school} onChange={(e) => setSeatForm({ ...seatForm, school: e.target.value })} required /></Field>
                 <Field label={t.grade}><Input value={seatForm.grade} onChange={(e) => setSeatForm({ ...seatForm, grade: e.target.value })} required /></Field>
                 <Field label={t.capacity}><Input type="number" min="0" value={seatForm.capacity} onChange={(e) => setSeatForm({ ...seatForm, capacity: Number(e.target.value) })} required /></Field>
@@ -575,17 +569,17 @@ export default function Home() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
-                    <tr>{[t.school, t.grade, t.capacity, t.reserved, t.available, t.lowSeat].map((header: string) => <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>)}</tr>
+                    <tr>{[t.school, t.grade, t.capacity, t.seatsReserved, t.available, t.lowSeat].map((header: string) => <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>)}</tr>
                   </thead>
                   <tbody>
                     {seats.data?.map((seat) => (
-                      <tr key={`${seat.school}-${seat.grade}`} className={cn("border-b border-white/10", seat.lowSeatAlert && "bg-red-500/12")}>
+                      <tr key={`${seat.school}-${seat.grade}`} className={cn("border-b border-white/10", seat.available <= 3 && "bg-red-500/12")}>
                         <td className="px-3 py-3 font-semibold">{seat.school}</td>
                         <td className="px-3 py-3">{seat.grade}</td>
                         <td className="px-3 py-3">{seat.capacity}</td>
-                        <td className="px-3 py-3">{seat.reserved}</td>
+                        <td className="px-3 py-3">{seat.reservedSeats}</td>
                         <td className="px-3 py-3 font-black text-cyan-100">{seat.available}</td>
-                        <td className="px-3 py-3">{seat.lowSeatAlert ? <Badge variant="destructive">≤ 3</Badge> : <Badge variant="secondary">{t.ok}</Badge>}</td>
+                        <td className="px-3 py-3">{seat.available <= 3 ? <Badge variant="destructive">≤ 3</Badge> : <Badge variant="secondary">{t.ok}</Badge>}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -30,7 +30,7 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/", id: "dashboard" },
   { icon: Users, label: "Students", path: "/", id: "students" },
-  { icon: GraduationCap, label: "Seat Planning", path: "/", id: "seats" },
+  { icon: GraduationCap, label: "Seat Planning", path: "/seat-availability", id: "seats" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

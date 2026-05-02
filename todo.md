@@ -63,3 +63,30 @@
 - [x] Test validation rules and error handling
 - [x] Run TypeScript checks and Vitest suite
 - [x] Verify production build
+
+
+## Phase 6: Advanced Search, Seat Availability Page, and Enhanced Dashboard
+
+### Student Search & Edit
+- [x] Add global search API endpoint supporting ID, Name, Grade, Parent Mobile (case-insensitive, partial match)
+- [ ] Implement debounced search UI with live results table
+- [ ] Add edit modal with pre-filled student data
+- [x] Implement update API with seat logic re-run on grade/status changes
+
+### Seat Availability Page
+- [x] Create new page: /seat-availability
+- [x] Add filters: School, Grade, Gender dropdowns
+- [x] Implement gender-aware section logic (Kindergarten shared, Grade 1+ segregated)
+- [x] Display: Total Capacity, Reserved Seats, Available Seats
+- [x] Implement backend API: GET /seats/availability?school=&grade=&gender=
+
+### Enhanced Professional Dashboard
+- [x] Add KPI cards: Total Students, Passed, Failed, Registered, Enrollment, Seats Reserved, Seats Available
+- [ ] Build School Breakdown table with Assessed/Passed/Registered/Payment methods/Seats columns
+- [ ] Build Seat Summary table with Capacity/Reserved/Available/Occupancy%
+- [ ] Build Payment Status table with counts and percentages
+- [ ] Build Seats Remaining by Grade table
+- [ ] Add Capacity vs Registered vs Available bar chart
+- [ ] Add Admission Pipeline chart (Assessed→Passed→Registered→Reserved)
+- [x] Add low-seat alert (≤3 available seats)
+- [x] Implement dashboard filters and real-time updates

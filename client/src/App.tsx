@@ -6,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import SeatAvailability from "./pages/SeatAvailability";
 
 function Router() {
   return (
@@ -13,6 +14,11 @@ function Router() {
       <Route path="/" key="home">
         <DashboardLayout>
           <Home />
+        </DashboardLayout>
+      </Route>
+      <Route path="/seat-availability" key="seat-availability">
+        <DashboardLayout>
+          <SeatAvailability />
         </DashboardLayout>
       </Route>
       <Route path="/404" key="not-found" component={NotFound} />
