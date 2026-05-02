@@ -28,9 +28,9 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/" },
-  { icon: Users, label: "Students", path: "/" },
-  { icon: GraduationCap, label: "Seat Planning", path: "/" },
+  { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/", id: "dashboard" },
+  { icon: Users, label: "Students", path: "/", id: "students" },
+  { icon: GraduationCap, label: "Seat Planning", path: "/", id: "seats" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -184,7 +184,7 @@ function DashboardLayoutContent({
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
-                  <SidebarMenuItem key={item.path}>
+                  <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
