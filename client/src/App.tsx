@@ -10,13 +10,13 @@ import Home from "./pages/Home";
 function Router() {
   return (
     <Switch>
-      <Route path="/">
+      <Route path="/" key="home">
         <DashboardLayout>
           <Home />
         </DashboardLayout>
       </Route>
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
+      <Route path="/404" key="not-found" component={NotFound} />
+      <Route key="fallback" component={NotFound} />
     </Switch>
   );
 }
