@@ -253,7 +253,9 @@ export const appRouter = router({
       }),
 
     // Get unique schools and grades for filters
-    getFilterOptions: adminProcedure.query(async () => {
+    getFilterOptions: adminProcedure
+      .input(z.object({}).optional())
+      .query(async () => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
