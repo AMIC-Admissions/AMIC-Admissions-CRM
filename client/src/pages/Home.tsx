@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StudentFormTabs } from "@/components/StudentFormTabs";
 import { trpc } from "@/lib/trpc";
 import {
   AlertTriangle,
@@ -31,22 +32,46 @@ type PaymentStatus = "Paid" | "Pending";
 type PaymentMethod = "Cash" | "Tamara" | "JeelPay";
 type Gender = "Male" | "Female";
 
-type StudentType = "New" | "Re-Registration" | "Enrollment";
+type StudentType = "New" | "Re-Registration" | "Enrollment" | "New Admission" | "Transfer";
 
 type StudentForm = {
   id?: number;
   studentId: string;
   name: string;
+  dateOfBirth?: string;
   gender: Gender;
   nationality: string;
   school: string;
   grade: string;
   section?: string;
   studentType: StudentType;
-  registrationDate: string;
+  dateOfJoin?: string;
+  assessed?: boolean;
+  passed?: boolean;
+  reAssessment?: boolean;
+  passedRe?: boolean;
+  registration?: boolean;
+  enrollment?: boolean;
+  transfer?: boolean;
+  firstInstallment?: boolean;
+  secondInstallment?: boolean;
+  fullPayment?: boolean;
+  promissoryNote?: boolean;
+  tamara?: boolean;
+  jeelPay?: boolean;
+  docsSigned?: boolean;
+  requirementsSubmitted?: boolean;
+  fatherId?: string;
+  fatherMobile?: string;
+  motherId?: string;
+  motherMobile?: string;
+  notes?: string;
+  status?: Status;
+  registrationDate?: string;
   paymentStatus: PaymentStatus;
-  paymentMethod: PaymentMethod;
-  fileComplete: boolean;
+  paymentMethod?: PaymentMethod;
+  fileComplete?: boolean;
+  seatReserved?: boolean;
 };
 
 const statusOrder: Status[] = ["Registered", "Assessed", "Passed", "Enrolled"];
@@ -58,11 +83,26 @@ const emptyForm: StudentForm = {
   school: "",
   grade: "",
   section: "",
-  studentType: "New",
+  studentType: "New Admission",
   registrationDate: new Date().toISOString().slice(0, 10),
   paymentStatus: "Pending",
   paymentMethod: "Cash",
   fileComplete: false,
+  assessed: false,
+  passed: false,
+  reAssessment: false,
+  passedRe: false,
+  registration: false,
+  enrollment: false,
+  transfer: false,
+  firstInstallment: false,
+  secondInstallment: false,
+  fullPayment: false,
+  promissoryNote: false,
+  tamara: false,
+  jeelPay: false,
+  docsSigned: false,
+  requirementsSubmitted: false,
 };
 
 const labels = {
@@ -339,10 +379,10 @@ export default function Home() {
       studentId: form.studentId,
       name: form.name,
       gender: form.gender,
-      nationality: form.nationality,
+      nationality: (form.nationality || "Saudi") as "Saudi" | "Non-Saudi",
       school: form.school,
       grade: form.grade,
-      studentType: (form.studentType || "New") as "New" | "Re-Registration" | "Enrollment",
+      studentType: (form.studentType || "New Admission") as "New Admission" | "Enrollment" | "Re-Registration" | "Transfer",
       paymentStatus: form.paymentStatus,
       paymentMethod: form.paymentMethod,
     };
@@ -595,39 +635,13 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-3 sm:grid-cols-2" onSubmit={submitStudent}>
-                <Field label={t.name}><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></Field>
-                <Field label={t.id}><Input value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })} required /></Field>
-                <Field label={t.gender}>
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value as Gender })}>
-                    <option value="Male">{label.gender.Male}</option><option value="Female">{label.gender.Female}</option>
-                  </select>
-                </Field>
-                <Field label={t.nationality}><Input value={form.nationality} onChange={(e) => setForm({ ...form, nationality: e.target.value })} required /></Field>
-                <Field label={t.school}><Input value={form.school} onChange={(e) => setForm({ ...form, school: e.target.value })} required /></Field>
-                <Field label={t.grade}><Input value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} required /></Field>
-                <Field label={t.registrationDate}><Input type="date" value={form.registrationDate} onChange={(e) => setForm({ ...form, registrationDate: e.target.value })} required /></Field>
-                <Field label={t.paymentStatus}>
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as PaymentStatus })}>
-                    <option value="Pending">{label.paymentStatus.Pending}</option><option value="Paid">{label.paymentStatus.Paid}</option>
-                  </select>
-                </Field>
-                <Field label={t.paymentMethod}>
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value as PaymentMethod })}>
-                    <option value="Cash">{label.paymentMethod.Cash}</option><option value="Tamara">{label.paymentMethod.Tamara}</option><option value="JeelPay">{label.paymentMethod.JeelPay}</option>
-                  </select>
-                </Field>
-                <label className="flex items-center gap-3 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-white">
-                  <Checkbox checked={form.fileComplete} onCheckedChange={(checked) => setForm({ ...form, fileComplete: checked === true })} />
-                  {t.fileComplete}
-                </label>
-                <div className="flex gap-2 sm:col-span-2">
-                  <Button className="flex-1 bg-cyan-200 text-[#031844] hover:bg-white" type="submit" disabled={createStudent.isPending || updateStudent.isPending}>
-                    <Save className="h-4 w-4" /> {form.id ? t.updateStudent : t.addStudent}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setForm(emptyForm)}>{t.clear}</Button>
-                </div>
-              </form>
+              <StudentFormTabs
+                formData={form}
+                onFormChange={(field, value) => setForm({ ...form, [field]: value })}
+                onSubmit={submitStudent}
+                isLoading={createStudent.isPending || updateStudent.isPending}
+                isEditing={!!form.id}
+              />
             </CardContent>
           </Card>
 
@@ -640,7 +654,7 @@ export default function Home() {
                 <table className="w-full min-w-[1100px] border-collapse text-sm">
                   <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
                     <tr>
-                      {[t.name, t.id, t.school, t.grade, t.status, t.paymentStatus, t.paymentMethod, t.fileComplete, t.actions].map((header) => (
+                      {[t.name, t.id, t.school, t.grade, t.status, t.paymentStatus, t.fileComplete, t.actions].map((header) => (
                         <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>
                       ))}
                     </tr>
@@ -656,26 +670,47 @@ export default function Home() {
                           <td className="px-3 py-3">{student.grade}</td>
                           <td className="px-3 py-3"><StatusBadge status={student.status as Status} label={label.status[student.status as Status]} /></td>
                           <td className="px-3 py-3"><Badge variant={student.paymentStatus === "Paid" ? "default" : "secondary"}>{label.paymentStatus[student.paymentStatus as PaymentStatus]}</Badge></td>
-                          <td className="px-3 py-3"><span className="inline-flex items-center gap-1"><CreditCard className="h-3 w-3" /> {label.paymentMethod[student.paymentMethod as PaymentMethod]}</span></td>
-                          <td className="px-3 py-3">{student.fileComplete ? t.yes : t.no}</td>
+                          <td className="px-3 py-3">{student.fileComplete ? <span className="text-green-400 font-bold">✓</span> : <span className="text-red-400">✗</span>}</td>
                           <td className="px-3 py-3">
                             <div className="flex flex-wrap gap-2">
                               <Button size="sm" variant="outline" onClick={() => setForm({
                                 id: student.id,
                                 studentId: student.studentId,
                                 name: student.name,
+                                dateOfBirth: student.dateOfBirth ? dateForInput(student.dateOfBirth) : undefined,
                                 gender: student.gender as Gender,
-                                nationality: student.nationality || "",
+                                nationality: student.nationality || "Saudi",
                                 school: student.school,
                                 grade: student.grade,
                                 section: student.section || "",
-                                studentType: (student.studentType as StudentType) || "New",
+                                studentType: (student.studentType as StudentType) || "New Admission",
+                                dateOfJoin: student.dateOfJoin ? dateForInput(student.dateOfJoin) : undefined,
+                                assessed: student.assessed,
+                                passed: student.passed,
+                                reAssessment: student.reAssessment,
+                                passedRe: student.passedRe,
+                                registration: student.registration,
+                                enrollment: student.enrollment,
+                                transfer: student.transfer,
+                                firstInstallment: student.firstInstallment,
+                                secondInstallment: student.secondInstallment,
+                                fullPayment: student.fullPayment,
+                                promissoryNote: student.promissoryNote,
+                                tamara: student.tamara,
+                                jeelPay: student.jeelPay,
+                                docsSigned: student.docsSigned,
+                                requirementsSubmitted: student.requirementsSubmitted,
+                                fatherId: student.fatherId || undefined,
+                                fatherMobile: student.fatherMobile || undefined,
+                                motherId: student.motherId || undefined,
+                                motherMobile: student.motherMobile || undefined,
+                                notes: student.notes || undefined,
                                 registrationDate: dateForInput(student.registrationDate),
                                 paymentStatus: student.paymentStatus as PaymentStatus,
                                 paymentMethod: student.paymentMethod as PaymentMethod,
                                 fileComplete: student.fileComplete,
+                                seatReserved: student.seatReserved,
                               })}>{t.edit}</Button>
-                               {next ? <Button size="sm" className="bg-cyan-200 text-[#031844] hover:bg-white" onClick={() => updateStudent.mutate({ id: student.id, status: next })}>{t.progress} <ArrowRight className="h-3 w-3" /> {label.status[next]}</Button> : null}
                               <Button size="sm" variant="destructive" onClick={() => deleteStudent.mutate({ id: student.id })}><Trash2 className="h-3 w-3" /> {t.delete}</Button>
                             </div>
                           </td>

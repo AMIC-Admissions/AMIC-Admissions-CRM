@@ -63,25 +63,70 @@ export type Seat = typeof seats.$inferSelect;
 export type InsertSeat = typeof seats.$inferInsert;
 
 /**
- * Students table for student management.
- * NOTE: This is the OLD schema. After migration is applied, restore from schema-new.ts.backup
+ * Students table for student management with complete AJYAL AL-MAARIFA structure.
+ * Migration 0004 has been applied - all fields are now available in the database.
  */
 export const students = mysqlTable("students", {
+  // Primary ID
   id: int("id").autoincrement().primaryKey(),
+
+  // STUDENT INFORMATION
   studentId: varchar("studentId", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
+  dateOfBirth: date("dateOfBirth"),
+
+  // PERSONAL DETAILS
   gender: mysqlEnum("gender", ["Male", "Female"]).notNull(),
-  nationality: varchar("nationality", { length: 100 }),
+  nationality: mysqlEnum("nationality", ["Saudi", "Non-Saudi"]).default("Saudi").notNull(),
+
+  // ENROLLMENT
   school: varchar("school", { length: 255 }).notNull(),
   grade: varchar("grade", { length: 255 }).notNull(),
   section: varchar("section", { length: 10 }),
+  studentType: mysqlEnum("studentType", ["New Admission", "Enrollment", "Re-Registration", "Transfer"]).default("New Admission").notNull(),
+  dateOfJoin: date("dateOfJoin"),
+
+  // ASSESSMENT
+  assessed: boolean("assessed").default(false).notNull(),
+  passed: boolean("passed").default(false).notNull(),
+  reAssessment: boolean("reAssessment").default(false).notNull(),
+  passedRe: boolean("passedRe").default(false).notNull(),
+
+  // STATUS
+  registration: boolean("registration").default(false).notNull(),
+  enrollment: boolean("enrollment").default(false).notNull(),
+  transfer: boolean("transfer").default(false).notNull(),
+
+  // PAYMENT
+  firstInstallment: boolean("firstInstallment").default(false).notNull(),
+  secondInstallment: boolean("secondInstallment").default(false).notNull(),
+  fullPayment: boolean("fullPayment").default(false).notNull(),
+  promissoryNote: boolean("promissoryNote").default(false).notNull(),
+  tamara: boolean("tamara").default(false).notNull(),
+  jeelPay: boolean("jeelPay").default(false).notNull(),
+
+  // DOCUMENTS
+  docsSigned: boolean("docsSigned").default(false).notNull(),
+  requirementsSubmitted: boolean("requirementsSubmitted").default(false).notNull(),
+  fileComplete: boolean("fileComplete").default(false).notNull(),
+
+  // PARENT / GUARDIAN
+  fatherId: varchar("fatherId", { length: 50 }),
+  fatherMobile: varchar("fatherMobile", { length: 20 }),
+  motherId: varchar("motherId", { length: 50 }),
+  motherMobile: varchar("motherMobile", { length: 20 }),
+
+  // ADMIN
+  seatReserved: boolean("seatReserved").default(false).notNull(),
+  notes: text("notes"),
+
+  // LEGACY FIELDS (for backward compatibility)
   status: mysqlEnum("status", ["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"]).default("Registered").notNull(),
-  registrationDate: timestamp("registrationDate").defaultNow().notNull(),
   paymentStatus: mysqlEnum("paymentStatus", ["Pending", "Paid"]).default("Pending").notNull(),
   paymentMethod: mysqlEnum("paymentMethod", ["Cash", "Tamara", "JeelPay", "Promissory Note"]),
-  studentType: mysqlEnum("studentType", ["New", "Re-Registration", "Enrollment"]).default("New").notNull(),
-  fileComplete: boolean("fileComplete").default(false).notNull(),
-  seatReserved: boolean("seatReserved").default(false).notNull(),
+
+  // TIMESTAMPS
+  registrationDate: timestamp("registrationDate").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
