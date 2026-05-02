@@ -30,6 +30,8 @@ type PaymentStatus = "Paid" | "Pending";
 type PaymentMethod = "Cash" | "Tamara" | "JeelPay";
 type Gender = "Male" | "Female";
 
+type StudentType = "New" | "Re-Registration" | "Enrollment";
+
 type StudentForm = {
   id?: number;
   studentId: string;
@@ -38,6 +40,8 @@ type StudentForm = {
   nationality: string;
   school: string;
   grade: string;
+  section?: string;
+  studentType: StudentType;
   registrationDate: string;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
@@ -52,6 +56,8 @@ const emptyForm: StudentForm = {
   nationality: "Saudi",
   school: "",
   grade: "",
+  section: "",
+  studentType: "New",
   registrationDate: new Date().toISOString().slice(0, 10),
   paymentStatus: "Pending",
   paymentMethod: "Cash",
@@ -212,7 +218,7 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>("en");
   const [filters, setFilters] = useState({ school: "", grade: "", from: "", to: "" });
   const [form, setForm] = useState<StudentForm>(emptyForm);
-  const [seatForm, setSeatForm] = useState({ school: "", grade: "", capacity: 0 });
+  const [seatForm, setSeatForm] = useState({ id: 0, school: "", grade: "", capacity: 0 });
   const t = copy[lang];
   const label = labels[lang];
   const isAdmin = user?.role === "admin";
@@ -228,17 +234,17 @@ export default function Home() {
     [filters],
   );
 
-  const dashboard = trpc.admissions.dashboard.useQuery(queryFilters, { enabled: isAdmin });
+  const dashboard = trpc.admissions.getDashboard.useQuery(queryFilters, { enabled: isAdmin });
   const students = trpc.admissions.listStudents.useQuery(queryFilters, { enabled: isAdmin });
-  const seats = trpc.admissions.listSeats.useQuery(undefined, { enabled: isAdmin });
-  const options = trpc.admissions.filters.useQuery(undefined, { enabled: isAdmin });
+  const seats = trpc.admissions.listSeats.useQuery(undefined as any, { enabled: isAdmin });
+  const options = trpc.admissions.getFilterOptions.useQuery(undefined as any, { enabled: isAdmin });
 
   const invalidateAdmissions = async () => {
     await Promise.all([
-      utils.admissions.dashboard.invalidate(),
+      utils.admissions.getDashboard.invalidate(),
       utils.admissions.listStudents.invalidate(),
       utils.admissions.listSeats.invalidate(),
-      utils.admissions.filters.invalidate(),
+      utils.admissions.getFilterOptions.invalidate(),
     ]);
   };
 
@@ -268,20 +274,14 @@ export default function Home() {
     onError: (error) => toast.error(error.message),
   });
 
-  const progressStudent = trpc.admissions.progressStudent.useMutation({
-    onSuccess: async () => {
-      toast.success(t.workflowAdvanced);
-      await invalidateAdmissions();
-    },
-    onError: (error) => toast.error(error.message),
-  });
 
-  const upsertSeat = trpc.admissions.upsertSeat.useMutation({
+
+  const updateSeat = trpc.admissions.updateSeat.useMutation({
     onSuccess: async () => {
       toast.success(t.seatSaved);
       await invalidateAdmissions();
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error: any) => toast.error(error.message),
   });
 
   const submitStudent = (event: FormEvent) => {
@@ -440,15 +440,15 @@ export default function Home() {
             <Field label={t.dateFrom}><Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} /></Field>
             <Field label={t.dateTo}><Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} /></Field>
             <Field label={t.school}>
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={filters.school} onChange={(e) => setFilters({ ...filters, school: e.target.value })}>
+              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={filters.school || ""} onChange={(e) => setFilters({ ...filters, school: e.target.value })}>
                 <option value="">{t.allSchools}</option>
-                {options.data?.schools.map((school) => <option key={school} value={school}>{school}</option>)}
+                {options.data?.schools.map((school: string) => <option key={school} value={school}>{school}</option>)}
               </select>
             </Field>
             <Field label={t.grade}>
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={filters.grade} onChange={(e) => setFilters({ ...filters, grade: e.target.value })}>
+              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm text-white" value={filters.grade || ""} onChange={(e) => setFilters({ ...filters, grade: e.target.value })}>
                 <option value="">{t.allGrades}</option>
-                {options.data?.grades.map((grade) => <option key={grade} value={grade}>{grade}</option>)}
+                {options.data?.grades.map((grade: string) => <option key={grade} value={grade}>{grade}</option>)}
               </select>
             </Field>
           </div>
@@ -532,15 +532,17 @@ export default function Home() {
                                 studentId: student.studentId,
                                 name: student.name,
                                 gender: student.gender as Gender,
-                                nationality: student.nationality,
+                                nationality: student.nationality || "",
                                 school: student.school,
                                 grade: student.grade,
+                                section: student.section || "",
+                                studentType: (student.studentType as StudentType) || "New",
                                 registrationDate: dateForInput(student.registrationDate),
                                 paymentStatus: student.paymentStatus as PaymentStatus,
                                 paymentMethod: student.paymentMethod as PaymentMethod,
                                 fileComplete: student.fileComplete,
                               })}>{t.edit}</Button>
-                              {next ? <Button size="sm" className="bg-cyan-200 text-[#031844] hover:bg-white" onClick={() => progressStudent.mutate({ id: student.id, nextStatus: next })}>{t.progress} <ArrowRight className="h-3 w-3" /> {label.status[next]}</Button> : null}
+                               {next ? <Button size="sm" className="bg-cyan-200 text-[#031844] hover:bg-white" onClick={() => updateStudent.mutate({ id: student.id, status: next })}>{t.progress} <ArrowRight className="h-3 w-3" /> {label.status[next]}</Button> : null}
                               <Button size="sm" variant="destructive" onClick={() => deleteStudent.mutate({ id: student.id })}><Trash2 className="h-3 w-3" /> {t.delete}</Button>
                             </div>
                           </td>
@@ -559,7 +561,7 @@ export default function Home() {
           <Card className="technical-panel text-white">
             <CardHeader><CardTitle className="text-xl font-black uppercase">{t.seats}</CardTitle></CardHeader>
             <CardContent>
-              <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); upsertSeat.mutate(seatForm); }}>
+              <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); updateSeat.mutate(seatForm); }}>
                 <Field label={t.school}><Input value={seatForm.school} onChange={(e) => setSeatForm({ ...seatForm, school: e.target.value })} required /></Field>
                 <Field label={t.grade}><Input value={seatForm.grade} onChange={(e) => setSeatForm({ ...seatForm, grade: e.target.value })} required /></Field>
                 <Field label={t.capacity}><Input type="number" min="0" value={seatForm.capacity} onChange={(e) => setSeatForm({ ...seatForm, capacity: Number(e.target.value) })} required /></Field>
@@ -573,7 +575,7 @@ export default function Home() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[760px] border-collapse text-sm">
                   <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
-                    <tr>{[t.school, t.grade, t.capacity, t.registered, t.reserved, t.available, t.lowSeat].map((header) => <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>)}</tr>
+                    <tr>{[t.school, t.grade, t.capacity, t.reserved, t.available, t.lowSeat].map((header: string) => <th className="border border-white/10 px-3 py-3 text-start" key={header}>{header}</th>)}</tr>
                   </thead>
                   <tbody>
                     {seats.data?.map((seat) => (
@@ -581,7 +583,6 @@ export default function Home() {
                         <td className="px-3 py-3 font-semibold">{seat.school}</td>
                         <td className="px-3 py-3">{seat.grade}</td>
                         <td className="px-3 py-3">{seat.capacity}</td>
-                        <td className="px-3 py-3">{seat.registered}</td>
                         <td className="px-3 py-3">{seat.reserved}</td>
                         <td className="px-3 py-3 font-black text-cyan-100">{seat.available}</td>
                         <td className="px-3 py-3">{seat.lowSeatAlert ? <Badge variant="destructive">≤ 3</Badge> : <Badge variant="secondary">{t.ok}</Badge>}</td>

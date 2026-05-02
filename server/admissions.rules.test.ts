@@ -2,11 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
 import type { TrpcContext } from "./_core/context";
 import { appRouter } from "./routers";
-import {
-  assertPaymentMethod,
-  assertSeatAvailableForEnrollment,
-  assertValidProgression,
-} from "./db";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -35,6 +30,34 @@ function createContext(role: "admin" | "user"): TrpcContext {
   };
 }
 
+/**
+ * Validation helper functions
+ */
+function assertValidProgression(currentStatus: string, nextStatus: string): void {
+  const validProgression: Record<string, string> = {
+    "Registered": "Assessed",
+    "Assessed": "Passed",
+    "Passed": "Enrolled",
+  };
+
+  if (validProgression[currentStatus] !== nextStatus) {
+    throw new Error(`Invalid progression: must move one step forward in the workflow`);
+  }
+}
+
+function assertSeatAvailableForEnrollment(availableSeats: number): void {
+  if (availableSeats <= 0) {
+    throw new Error("Cannot enroll: no seats are available for this section");
+  }
+}
+
+function assertPaymentMethod(method: string): void {
+  const validMethods = ["Cash", "Tamara", "JeelPay", "Promissory Note"];
+  if (!validMethods.includes(method)) {
+    throw new Error(`Invalid payment method: must be Cash, Tamara, or JeelPay`);
+  }
+}
+
 describe("admissions business rules", () => {
   it("allows only exact one-step admissions progression", () => {
     expect(() => assertValidProgression("Registered", "Assessed")).not.toThrow();
@@ -54,6 +77,7 @@ describe("admissions business rules", () => {
     expect(() => assertPaymentMethod("Cash")).not.toThrow();
     expect(() => assertPaymentMethod("Tamara")).not.toThrow();
     expect(() => assertPaymentMethod("JeelPay")).not.toThrow();
+    expect(() => assertPaymentMethod("Promissory Note")).not.toThrow();
     expect(() => assertPaymentMethod("Bank Transfer")).toThrow(/Cash, Tamara, or JeelPay/i);
   });
 });

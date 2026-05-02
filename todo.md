@@ -24,3 +24,42 @@
 - [x] Add explicit loading, error, and empty states for dashboard KPI cards, daily registrations chart, and weekly comparison instead of defaulting to misleading zeros or empty charts.
 - [x] Verify and document successful workbook-based seed import so initial spreadsheet-derived data is proven present.
 - [x] Add explicit loading, error, and empty-state UI for dashboard KPI cards instead of symbolic placeholders.
+
+
+## Phase 2: Smart Seat Allocation Engine
+
+- [x] Extend database schema: add Section field to students table, add Seats table with School/Grade/Section/Capacity/ReservedSeats
+- [x] Implement seat allocation logic: auto-assign section based on gender and grade rules
+- [x] Implement seat reservation logic: reserve seat when Student Type = Re-Registration/Enrollment OR payment conditions met
+- [x] Implement seat release logic: release seat when Status = Withdrawn
+- [x] Add validation: prevent registration if no seats available
+- [x] Add validation: prevent wrong gender in wrong section (Grade 1+)
+
+## Phase 3: Enhanced Student Management
+
+- [x] Update student form to include Section field (auto-assigned, read-only)
+- [x] Update student form to include Student Type dropdown (Re-Registration, Enrollment, etc.)
+- [x] Update student form to include payment fields (Payment Status, Payment Method, Payment Date)
+- [x] Implement section auto-assignment on student creation
+- [x] Implement seat reservation on student creation/update based on rules
+- [x] Implement seat release on student withdrawal
+
+## Phase 4: Comprehensive Dashboard
+
+- [x] Add filters: Date range, School, Grade
+- [x] Build KPI cards: Total Students, Registered, Enrolled, Seats Reserved, Seats Available
+- [x] Build daily registrations chart (line chart)
+- [x] Build weekly comparison chart (this week vs last week + growth %)
+- [x] Build admission funnel (Registered → Assessed → Passed → Enrolled)
+- [x] Build payment analysis (Cash vs Tamara vs JeelPay + Paid vs Pending)
+- [x] Build seat utilization charts (by School, by Grade, by Section)
+- [x] Add low-seat alert (≤ 3 available seats)
+
+## Phase 5: Testing & Validation
+
+- [x] Test seat allocation logic with various gender/grade combinations
+- [x] Test seat reservation and release workflows
+- [x] Test dashboard filters and real-time updates
+- [x] Test validation rules and error handling
+- [x] Run TypeScript checks and Vitest suite
+- [x] Verify production build

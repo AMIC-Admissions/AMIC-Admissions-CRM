@@ -1,17 +1,7 @@
-import {
-  boolean,
-  int,
-  mysqlEnum,
-  mysqlTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -25,57 +15,75 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * Schools table for school management.
+ */
 export const schools = mysqlTable("schools", {
   id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 120 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
-export const seatCapacities = mysqlTable(
-  "seatCapacities",
-  {
-    id: int("id").autoincrement().primaryKey(),
-    school: varchar("school", { length: 120 }).notNull(),
-    grade: varchar("grade", { length: 80 }).notNull(),
-    capacity: int("capacity").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  },
-  (table) => ({
-    schoolGradeIdx: uniqueIndex("seatCapacities_school_grade_idx").on(table.school, table.grade),
-  }),
-);
-
-export const students = mysqlTable(
-  "students",
-  {
-    id: int("id").autoincrement().primaryKey(),
-    studentId: varchar("studentId", { length: 64 }).notNull(),
-    name: varchar("name", { length: 240 }).notNull(),
-    gender: mysqlEnum("gender", ["Male", "Female"]).notNull(),
-    nationality: varchar("nationality", { length: 120 }).notNull(),
-    school: varchar("school", { length: 120 }).notNull(),
-    grade: varchar("grade", { length: 80 }).notNull(),
-    status: mysqlEnum("status", ["Registered", "Assessed", "Passed", "Enrolled"]).default("Registered").notNull(),
-    registrationDate: timestamp("registrationDate").defaultNow().notNull(),
-    paymentStatus: mysqlEnum("paymentStatus", ["Paid", "Pending"]).default("Pending").notNull(),
-    paymentMethod: mysqlEnum("paymentMethod", ["Cash", "Tamara", "JeelPay"]).default("Cash").notNull(),
-    fileComplete: boolean("fileComplete").default(false).notNull(),
-    createdBy: int("createdBy"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  },
-  (table) => ({
-    studentIdIdx: uniqueIndex("students_studentId_idx").on(table.studentId),
-  }),
-);
-
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
 export type School = typeof schools.$inferSelect;
 export type InsertSchool = typeof schools.$inferInsert;
+
+/**
+ * Grades table for grade management.
+ */
+export const grades = mysqlTable("grades", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  level: int("level").notNull(), // 0 for Pre-KG, 1 for KG1, 2 for KG2, 3+ for Grade 1+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Grade = typeof grades.$inferSelect;
+export type InsertGrade = typeof grades.$inferInsert;
+
+/**
+ * Seats table for seat capacity and reservation tracking.
+ */
+export const seats = mysqlTable("seats", {
+  id: int("id").autoincrement().primaryKey(),
+  school: varchar("school", { length: 255 }).notNull(),
+  grade: varchar("grade", { length: 255 }).notNull(),
+  section: varchar("section", { length: 10 }).notNull(), // A, B, C, D, E, F, etc.
+  capacity: int("capacity").notNull(),
+  reservedSeats: int("reservedSeats").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Seat = typeof seats.$inferSelect;
+export type InsertSeat = typeof seats.$inferInsert;
+
+/**
+ * Students table for student management with section assignment.
+ */
+export const students = mysqlTable("students", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: varchar("studentId", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  gender: mysqlEnum("gender", ["Male", "Female"]).notNull(),
+  nationality: varchar("nationality", { length: 100 }),
+  school: varchar("school", { length: 255 }).notNull(),
+  grade: varchar("grade", { length: 255 }).notNull(),
+  section: varchar("section", { length: 10 }), // Auto-assigned based on gender and grade
+  status: mysqlEnum("status", ["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"]).default("Registered").notNull(),
+  registrationDate: timestamp("registrationDate").defaultNow().notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["Pending", "Paid"]).default("Pending").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["Cash", "Tamara", "JeelPay", "Promissory Note"]),
+  studentType: mysqlEnum("studentType", ["New", "Re-Registration", "Enrollment"]).default("New").notNull(),
+  fileComplete: boolean("fileComplete").default(false).notNull(),
+  seatReserved: boolean("seatReserved").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = typeof students.$inferInsert;
-export type SeatCapacity = typeof seatCapacities.$inferSelect;
-export type InsertSeatCapacity = typeof seatCapacities.$inferInsert;

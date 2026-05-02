@@ -15,6 +15,13 @@
       "when": 1777731889805,
       "tag": "0001_amusing_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777734060627,
+      "tag": "0002_fluffy_cerise",
+      "breakpoints": true
     }
   ]
 }
