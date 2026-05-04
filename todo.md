@@ -313,6 +313,12 @@
 - [x] Calculate available = capacity - reserved
 - [x] Verify calculations show real data (not all zeros)
 - [x] Test dynamic updates when students are added/edited/imported
+- [x] Fix Seat Reserved logic for ALL existing and future students
+- [x] Implement auto-calculation based on studentType and payment fields
+- [x] Update createStudent to auto-calculate seatReserved
+- [x] Update updateStudent to recalculate seatReserved
+- [x] Update Excel import to parse and pass payment fields
+- [x] Verify seat availability shows correct reserved counts (10 students)
 
 ### Authentication & Users (MANDATORY)
 - [x] Implement Manus OAuth authentication
