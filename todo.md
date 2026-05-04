@@ -298,7 +298,7 @@
 - [x] Create Export functionality (CSV) - working
 
 ### Search & Edit
-- [ ] Add global search in header (future enhancement)
+- [ ] Add global search in header (not yet implemented - future enhancement)
 - [x] Implement search by Name/ID/Mobile/Grade - via Students page
 - [x] Build edit modal with form fields
 - [x] Trigger seat logic on update
