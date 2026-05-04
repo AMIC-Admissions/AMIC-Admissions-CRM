@@ -290,10 +290,10 @@
 - [x] Add Import/Export buttons
 
 ### Import/Export
-- [ ] Create Import page component (future enhancement)
+- [ ] Create Import page component (future enhancement - placeholder button only)
 - [ ] Build Excel upload with validation (future enhancement)
 - [x] Apply File Complete and Seat Reserved logic
-- [x] Create Export functionality (Excel) - via Reports
+- [x] Create Export functionality (CSV) - working
 - [ ] Test with sample data (future enhancement)
 
 ### Search & Edit
