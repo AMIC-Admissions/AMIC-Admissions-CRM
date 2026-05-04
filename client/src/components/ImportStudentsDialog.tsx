@@ -104,6 +104,24 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
     try {
       for (const row of validRows) {
         try {
+          // Map studentType to valid enum values
+          let studentTypeValue = "New Admission";
+          if (row.studentType) {
+            const type = String(row.studentType).trim().toLowerCase();
+            if (type.includes("enrollment")) studentTypeValue = "Enrollment";
+            else if (type.includes("re-registration") || type.includes("reregistration")) studentTypeValue = "Re-Registration";
+            else if (type.includes("transfer")) studentTypeValue = "Transfer";
+          }
+
+          // Map paymentMethod to valid values
+          let paymentMethodValue = "Cash";
+          if (row.paymentMethod) {
+            const method = String(row.paymentMethod).trim();
+            if (["Bank Transfer", "Card", "Tamara", "JeelPay"].includes(method)) {
+              paymentMethodValue = method;
+            }
+          }
+
           await createStudent.mutateAsync({
             studentId: row.studentId!,
             name: row.name!,
@@ -111,9 +129,9 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             nationality: (row.nationality as "Saudi" | "Non-Saudi") || "Saudi",
             school: row.school!,
             grade: row.grade!,
-            studentType: (row.studentType as any) || "New Admission",
+            studentType: studentTypeValue as any,
             paymentStatus: (row.paymentStatus as "Paid" | "Pending") || "Pending",
-            paymentMethod: (row.paymentMethod as any) || "Cash",
+            paymentMethod: paymentMethodValue as any,
           });
           successCount++;
         } catch (error) {
@@ -163,58 +181,57 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={handleFileUpload}
-                className="mt-4 hidden"
-                id="file-input"
+                className="hidden"
+                id="file-upload"
               />
-              <Button
-                onClick={() => document.getElementById("file-input")?.click()}
-                className="mt-4 bg-cyan-200 text-[#031844] hover:bg-white"
-              >
-                Choose File
-              </Button>
+              <label htmlFor="file-upload">
+                <Button asChild variant="default" className="mt-4">
+                  <span>Choose File</span>
+                </Button>
+              </label>
             </div>
-            <p className="text-xs text-white/50">
-              Required columns: Name, Student ID, School, Grade. Optional: Gender, Nationality,
-              Student Type, Payment Status, Payment Method
-            </p>
+            <div className="text-xs text-white/50">
+              <p className="font-semibold">Required columns: Name, Student ID, School, Grade</p>
+              <p>Optional: Gender, Nationality, Student Type, Payment Status, Payment Method</p>
+            </div>
           </div>
         )}
 
         {step === "review" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-white/5 border-emerald-200/20">
+              <Card className="border-green-900/50 bg-green-950/20">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-emerald-200">Valid Rows</CardTitle>
+                  <CardTitle className="text-sm text-green-200">Valid Rows</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">{validRows.length}</div>
+                  <p className="text-2xl font-bold text-green-400">{validRows.length}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white/5 border-red-200/20">
+              <Card className="border-red-900/50 bg-red-950/20">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm text-red-200">Invalid Rows</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">{invalidRows.length}</div>
+                  <p className="text-2xl font-bold text-red-400">{invalidRows.length}</p>
                 </CardContent>
               </Card>
             </div>
 
             {invalidRows.length > 0 && (
-              <Card className="bg-white/5 border-red-200/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm text-red-200">
+              <Card className="border-yellow-900/50 bg-yellow-950/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm text-yellow-200">
                     <AlertTriangle className="h-4 w-4" />
                     Invalid Rows
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <div className="space-y-1 text-xs text-yellow-300">
                     {invalidRows.map((row, idx) => (
-                      <div key={idx} className="text-xs text-red-200/75">
+                      <p key={idx}>
                         Row {row.rowNumber}: {row.error}
-                      </div>
+                      </p>
                     ))}
                   </div>
                 </CardContent>
@@ -222,17 +239,13 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             )}
 
             <div className="flex gap-2">
-              <Button
-                onClick={() => setStep("upload")}
-                variant="outline"
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={() => setStep("upload")} className="flex-1">
                 Back
               </Button>
               <Button
                 onClick={handleImport}
-                disabled={validRows.length === 0 || isProcessing}
-                className="flex-1 bg-emerald-200 text-[#031844] hover:bg-white"
+                disabled={isProcessing || validRows.length === 0}
+                className="flex-1 bg-green-600 hover:bg-green-700"
               >
                 {isProcessing ? "Importing..." : `Import ${validRows.length} Students`}
               </Button>
@@ -242,17 +255,12 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
 
         {step === "result" && (
           <div className="space-y-4 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-200" />
+            <CheckCircle2 className="mx-auto h-12 w-12 text-green-400" />
             <div>
-              <p className="text-lg font-semibold text-white">Import Complete</p>
-              <p className="text-sm text-white/75">
-                Successfully imported {validRows.length} students
-              </p>
+              <p className="text-lg font-semibold text-white">Import Complete!</p>
+              <p className="text-sm text-white/75">Students have been successfully imported</p>
             </div>
-            <Button
-              onClick={handleClose}
-              className="w-full bg-cyan-200 text-[#031844] hover:bg-white"
-            >
+            <Button onClick={handleClose} className="w-full">
               Close
             </Button>
           </div>
