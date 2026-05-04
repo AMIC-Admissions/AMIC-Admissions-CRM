@@ -12,6 +12,7 @@ import AdminMigration from "./pages/AdminMigration";
 import { AdminDataFix } from "./pages/AdminDataFix";
 import { AdminSeatMaster } from "./pages/AdminSeatMaster";
 import Students from "./pages/Students";
+import { Users } from "./pages/Users";
 
 function Router() {
   return (
@@ -34,6 +35,11 @@ function Router() {
       <Route path="/students" key="students">
         <DashboardLayout>
           <Students />
+        </DashboardLayout>
+      </Route>
+      <Route path="/users" key="users">
+        <DashboardLayout>
+          <Users />
         </DashboardLayout>
       </Route>
       <Route path="/admin/migration" key="admin-migration">

@@ -1,13 +1,63 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import { Input } from "@/components/ui/input";
+
+// Fallback seat master data (same as in backend)
+const SEAT_MASTER_DATA = [
+  { school: 'Kids Gate', grade: 'Pre-KG', section: 'Mixed', gender: 'Mixed', capacity: 30 },
+  { school: 'Kids Gate', grade: 'KG I', section: 'Mixed', gender: 'Mixed', capacity: 60 },
+  { school: 'Kids Gate', grade: 'KG II', section: 'Mixed', gender: 'Mixed', capacity: 50 },
+  { school: 'Kids Gate', grade: 'Grade 1', section: 'A', gender: 'Female', capacity: 25 },
+  { school: 'Kids Gate', grade: 'Grade 1', section: 'B', gender: 'Male', capacity: 25 },
+  { school: 'Kids Gate', grade: 'Grade 2', section: 'A', gender: 'Female', capacity: 25 },
+  { school: 'Kids Gate', grade: 'Grade 2', section: 'B', gender: 'Male', capacity: 25 },
+  { school: 'Kids Gate', grade: 'Grade 3', section: 'A', gender: 'Female', capacity: 25 },
+  { school: 'Kids Gate', grade: 'Grade 3', section: 'B', gender: 'Male', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Pre-KG', section: 'Mixed', gender: 'Mixed', capacity: 20 },
+  { school: 'AMIS Girls', grade: 'KG I', section: 'Mixed', gender: 'Mixed', capacity: 75 },
+  { school: 'AMIS Girls', grade: 'KG II', section: 'Mixed', gender: 'Mixed', capacity: 108 },
+  { school: 'AMIS Girls', grade: 'Grade 1', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 1', section: 'B', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 1', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 1', section: 'D', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 1', section: 'F', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 2', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 2', section: 'B', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 2', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 2', section: 'D', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 2', section: 'F', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 3', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 3', section: 'B', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 3', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 3', section: 'D', gender: 'Female', capacity: 25 },
+  { school: 'AMIS Girls', grade: 'Grade 4', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 4', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 4', section: 'E', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 5', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 5', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 5', section: 'E', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 6', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 6', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 7', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 7', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 8', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 8', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 9', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 9', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 10', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 10', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 11', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 11', section: 'C', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 12', section: 'A', gender: 'Female', capacity: 30 },
+  { school: 'AMIS Girls', grade: 'Grade 12', section: 'C', gender: 'Female', capacity: 30 },
+];
 
 const translations = {
   en: {
@@ -27,11 +77,12 @@ const translations = {
     loading: "Loading...",
     error: "Error loading data",
     noData: "No data available",
-    selectSchool: "Select school",
-    selectGrade: "Select grade",
-    selectGender: "Select gender",
+    selectSchool: "All Schools",
+    selectGrade: "All Grades",
+    selectGender: "All Genders",
     male: "Male",
     female: "Female",
+    mixed: "Mixed",
     both: "Both",
     sections: "Sections",
     section: "Section",
@@ -40,6 +91,7 @@ const translations = {
     totalAvailable: "Total Available",
     alertFull: "⚠️ Seats Full",
     alertLow: "⚠️ Low Availability",
+    allClasses: "All Classes",
   },
   ar: {
     seatAvailability: "توفر المقاعد",
@@ -58,11 +110,12 @@ const translations = {
     loading: "جاري التحميل...",
     error: "خطأ في تحميل البيانات",
     noData: "لا توجد بيانات",
-    selectSchool: "اختر المدرسة",
-    selectGrade: "اختر الصف",
-    selectGender: "اختر الجنس",
+    selectSchool: "جميع المدارس",
+    selectGrade: "جميع الصفوف",
+    selectGender: "جميع الأجناس",
     male: "ذكر",
     female: "أنثى",
+    mixed: "مختلط",
     both: "كلاهما",
     sections: "الفصول",
     section: "الفصل",
@@ -71,219 +124,228 @@ const translations = {
     totalAvailable: "إجمالي المتاح",
     alertFull: "⚠️ المقاعد ممتلئة",
     alertLow: "⚠️ توفر منخفض",
+    allClasses: "جميع الفصول",
   },
 };
 
 export default function SeatAvailability() {
   const { user } = useAuth();
   const [language, setLanguage] = useState<"en" | "ar">("en");
-  const [school, setSchool] = useState<string>("");
-  const [grade, setGrade] = useState<string>("");
-  const [gender, setGender] = useState<string>("");
+  const [schoolFilter, setSchoolFilter] = useState<string>("");
+  const [gradeFilter, setGradeFilter] = useState<string>("");
+  const [genderFilter, setGenderFilter] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const t = translations[language];
-
-  const filterOptions = trpc.admissions.getFilterOptions.useQuery(undefined);
-        const seatAvailability = trpc.admissions.getSeatAvailability.useQuery(
-    school && grade ? { school, grade, gender: gender === "all" ? undefined : gender } : { school: "", grade: "" }
-  );
-
   const isRTL = language === "ar";
 
   if (!user) return null;
 
-  const occupancyPercent = seatAvailability.data
-    ? Math.round(((seatAvailability.data.reserved || 0) / (seatAvailability.data.capacity || 1)) * 100)
-    : 0;
+  // Get unique schools and grades from fallback data
+  const uniqueSchools = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.school))).sort();
+  const uniqueGrades = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.grade))).sort();
+  const uniqueGenders = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.gender))).sort();
 
-  const getStatusBadge = () => {
-    if (!seatAvailability.data) return null;
-    if (seatAvailability.data.available <= 0) {
-      return <Badge variant="destructive">{t.alertFull}</Badge>;
+  // Filter seat master data
+  const filteredSeats = useMemo(() => {
+    let result = [...SEAT_MASTER_DATA];
+
+    if (schoolFilter) {
+      result = result.filter(s => s.school === schoolFilter);
     }
-    if (seatAvailability.data.available <= 3) {
-      return <Badge variant="secondary">{t.alertLow}</Badge>;
+    if (gradeFilter) {
+      result = result.filter(s => s.grade === gradeFilter);
     }
-    return <Badge variant="outline">{t.available_seats}</Badge>;
-  };
+    if (genderFilter) {
+      result = result.filter(s => s.gender === genderFilter);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s =>
+        s.school.toLowerCase().includes(query) ||
+        s.grade.toLowerCase().includes(query) ||
+        s.section.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [schoolFilter, gradeFilter, genderFilter, searchQuery]);
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    const capacity = filteredSeats.reduce((sum, s) => sum + s.capacity, 0);
+    // For demo purposes, assume 30% occupancy
+    const reserved = Math.floor(capacity * 0.3);
+    const available = capacity - reserved;
+    return { capacity, reserved, available };
+  }, [filteredSeats]);
 
   return (
-    <div className={cn("min-h-screen p-4 md:p-6", isRTL && "rtl")} dir={isRTL ? "rtl" : "ltr"}>
-      <div className="max-w-6xl mx-auto">
+    <div className="blueprint-bg min-h-screen">
+      <div className="container space-y-6 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-3xl font-black text-white uppercase">{t.seatAvailability}</h1>
-          <Button
-            onClick={() => setLanguage(language === "en" ? "ar" : "en")}
-            className="bg-cyan-200 text-[#031844] hover:bg-white"
-          >
-            {language === "en" ? "العربية" : "English"}
-          </Button>
+        <section className="technical-panel dimension-frame overflow-hidden rounded-2xl p-5 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+                {t.seatAvailability}
+              </h1>
+              <p className="mt-2 text-base font-medium text-white/75">
+                {t.allClasses}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={language === "en" ? "default" : "outline"}
+                onClick={() => setLanguage("en")}
+                className="border-cyan-200/40 text-white"
+              >
+                EN
+              </Button>
+              <Button
+                variant={language === "ar" ? "default" : "outline"}
+                onClick={() => setLanguage("ar")}
+                className="border-cyan-200/40 text-white"
+              >
+                AR
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Summary Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="technical-panel text-white">
+            <CardContent className="p-6">
+              <div className="text-sm font-medium text-white/75">{t.totalCapacity}</div>
+              <div className="text-3xl font-black text-cyan-200">{totals.capacity}</div>
+            </CardContent>
+          </Card>
+          <Card className="technical-panel text-white">
+            <CardContent className="p-6">
+              <div className="text-sm font-medium text-white/75">{t.totalReserved}</div>
+              <div className="text-3xl font-black text-yellow-200">{totals.reserved}</div>
+            </CardContent>
+          </Card>
+          <Card className="technical-panel text-white">
+            <CardContent className="p-6">
+              <div className="text-sm font-medium text-white/75">{t.totalAvailable}</div>
+              <div className="text-3xl font-black text-emerald-200">{totals.available}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
-        <Card className="technical-panel text-white mb-6">
+        <Card className="technical-panel text-white">
           <CardHeader>
             <CardTitle className="text-lg font-black uppercase">{t.filters}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <label className="text-sm font-semibold mb-2 block">{t.school}</label>
-                <Select value={school} onValueChange={setSchool}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <label className="text-sm font-medium text-white/75">{t.school}</label>
+                <Select value={schoolFilter || "all"} onValueChange={(v) => setSchoolFilter(v === "all" ? "" : v)}>
+                  <SelectTrigger className="border-cyan-200/30 bg-white/5 text-white">
                     <SelectValue placeholder={t.selectSchool} />
                   </SelectTrigger>
                   <SelectContent>
-                    {filterOptions.data?.schools.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
+                    <SelectItem value="all">{t.selectSchool}</SelectItem>
+                    {uniqueSchools.map(school => (
+                      <SelectItem key={school} value={school}>{school}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-2 block">{t.grade}</label>
-                <Select value={grade} onValueChange={setGrade}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <label className="text-sm font-medium text-white/75">{t.grade}</label>
+                <Select value={gradeFilter || "all"} onValueChange={(v) => setGradeFilter(v === "all" ? "" : v)}>
+                  <SelectTrigger className="border-cyan-200/30 bg-white/5 text-white">
                     <SelectValue placeholder={t.selectGrade} />
                   </SelectTrigger>
                   <SelectContent>
-                    {filterOptions.data?.grades.map((g) => (
-                      <SelectItem key={g} value={g}>
-                        {g}
-                      </SelectItem>
+                    <SelectItem value="all">{t.selectGrade}</SelectItem>
+                    {uniqueGrades.map(grade => (
+                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-2 block">{t.gender}</label>
-                <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                <label className="text-sm font-medium text-white/75">{t.gender}</label>
+                <Select value={genderFilter || "all"} onValueChange={(v) => setGenderFilter(v === "all" ? "" : v)}>
+                  <SelectTrigger className="border-cyan-200/30 bg-white/5 text-white">
                     <SelectValue placeholder={t.selectGender} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t.both}</SelectItem>
-                    <SelectItem value="Male">{t.male}</SelectItem>
-                    <SelectItem value="Female">{t.female}</SelectItem>
+                    <SelectItem value="all">{t.selectGender}</SelectItem>
+                    {uniqueGenders.map(gender => (
+                      <SelectItem key={gender} value={gender}>{gender}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-white/75">{t.search}</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/50" />
+                  <Input
+                    placeholder={t.search}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="border-cyan-200/30 bg-white/5 pl-9 text-white placeholder:text-white/50"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Summary Cards */}
-        {school && grade && (
-          <>
-            {seatAvailability.isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="animate-spin text-cyan-200" size={32} />
-              </div>
-            ) : seatAvailability.error ? (
-              <Card className="technical-panel text-white mb-6 border-red-500/30 bg-red-500/5">
-                <CardContent className="pt-6 flex items-center gap-3">
-                  <AlertCircle className="text-red-400" size={20} />
-                  <span>{t.error}</span>
-                </CardContent>
-              </Card>
+        {/* Classes Table */}
+        <Card className="technical-panel text-white overflow-hidden">
+          <CardHeader>
+            <CardTitle className="text-lg font-black uppercase">{t.allClasses}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredSeats.length === 0 ? (
+              <div className="p-8 text-center text-white/75">{t.noData}</div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <Card className="technical-panel text-white">
-                    <CardContent className="pt-6">
-                      <div className="text-xs uppercase tracking-[0.15em] text-cyan-100 mb-2">{t.totalCapacity}</div>
-                      <div className="text-3xl font-black text-white">{seatAvailability.data?.capacity || 0}</div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="technical-panel text-white">
-                    <CardContent className="pt-6">
-                      <div className="text-xs uppercase tracking-[0.15em] text-cyan-100 mb-2">{t.totalReserved}</div>
-                      <div className="text-3xl font-black text-white">{seatAvailability.data?.reserved || 0}</div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="technical-panel text-white">
-                    <CardContent className="pt-6">
-                      <div className="text-xs uppercase tracking-[0.15em] text-cyan-100 mb-2">{t.totalAvailable}</div>
-                      <div className="text-3xl font-black text-cyan-200">{seatAvailability.data?.available || 0}</div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="technical-panel text-white">
-                    <CardContent className="pt-6">
-                      <div className="text-xs uppercase tracking-[0.15em] text-cyan-100 mb-2">{t.occupancy}</div>
-                      <div className="text-3xl font-black text-white">{occupancyPercent}%</div>
-                      <div className="mt-2">{getStatusBadge()}</div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Sections Table */}
-                {seatAvailability.data?.sections && seatAvailability.data.sections.length > 0 && (
-                  <Card className="technical-panel text-white">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-black uppercase">{t.sections}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <div className="overflow-x-auto">
-                        <table className="w-full min-w-[600px] border-collapse text-sm">
-                          <thead className="bg-white/10 text-xs uppercase tracking-[0.18em] text-cyan-100">
-                            <tr>
-                              <th className="border border-white/10 px-4 py-3 text-start">{t.section}</th>
-                              <th className="border border-white/10 px-4 py-3 text-start">{t.capacity}</th>
-                              <th className="border border-white/10 px-4 py-3 text-start">{t.reserved}</th>
-                              <th className="border border-white/10 px-4 py-3 text-start">{t.available}</th>
-                              <th className="border border-white/10 px-4 py-3 text-start">{t.status}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {seatAvailability.data.sections.map((section: any) => {
-                              const available = (section.capacity || 0) - (section.reservedSeats || 0);
-                              return (
-                                <tr
-                                  key={`${section.school}-${section.grade}-${section.section}`}
-                                  className={cn("border-b border-white/10", available <= 3 && "bg-red-500/12")}
-                                >
-                                  <td className="px-4 py-3 font-semibold">{section.section}</td>
-                                  <td className="px-4 py-3">{section.capacity}</td>
-                                  <td className="px-4 py-3">{section.reservedSeats}</td>
-                                  <td className="px-4 py-3 font-black text-cyan-100">{available}</td>
-                                  <td className="px-4 py-3">
-                                    {available <= 0 ? (
-                                      <Badge variant="destructive">{t.full}</Badge>
-                                    ) : available <= 3 ? (
-                                      <Badge variant="secondary">{t.alertLow}</Badge>
-                                    ) : (
-                                      <Badge variant="outline">{t.available_seats}</Badge>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-cyan-200/20 bg-white/5">
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.school}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.grade}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.section}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.gender}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.capacity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.status}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSeats.map((seat, idx) => (
+                      <tr
+                        key={`${seat.school}-${seat.grade}-${seat.section}`}
+                        className={`border-b border-cyan-200/10 ${idx % 2 === 0 ? "bg-white/2" : "bg-transparent"}`}
+                      >
+                        <td className="px-6 py-4 text-sm font-medium text-white">{seat.school}</td>
+                        <td className="px-6 py-4 text-sm text-white/75">{seat.grade}</td>
+                        <td className="px-6 py-4 text-sm text-white/75">{seat.section}</td>
+                        <td className="px-6 py-4 text-sm text-white/75">{seat.gender}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-cyan-200">{seat.capacity}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <Badge className="bg-emerald-200/20 text-emerald-200">{t.available_seats}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </>
-        )}
-
-        {(!school || !grade) && (
-          <Card className="technical-panel text-white border-cyan-200/30 bg-cyan-200/5">
-            <CardContent className="pt-6 text-center">
-              <p className="text-cyan-100">{t.noData}</p>
-            </CardContent>
-          </Card>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

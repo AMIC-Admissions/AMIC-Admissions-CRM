@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StudentFormTabs } from "@/components/StudentFormTabs";
+import { ImportStudentsDialog } from "@/components/ImportStudentsDialog";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -192,6 +193,7 @@ export default function Students() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const t = copy[lang];
   const isAdmin = user?.role === "admin";
@@ -247,6 +249,11 @@ export default function Students() {
     setEditModalOpen(true);
   };
 
+  const handleImportSuccess = async () => {
+    setImportDialogOpen(false);
+    await utils.admissions.listStudents.invalidate();
+  };
+
   const handleEditStudent = (student: any) => {
     setForm({
       id: student.id,
@@ -280,7 +287,7 @@ export default function Students() {
   };
 
   const handleImportStudents = () => {
-    toast.info('Import feature coming soon - use Add Student button');
+    setImportDialogOpen(true);
   };
 
   const handleExportStudents = () => {
@@ -342,6 +349,11 @@ export default function Students() {
 
   return (
     <div className="blueprint-bg min-h-screen" dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
+      <ImportStudentsDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={handleImportSuccess}
+      />
       <div className="container space-y-6 py-6 sm:py-8">
         {/* Header */}
         <section className="technical-panel dimension-frame overflow-hidden rounded-2xl p-5 sm:p-8">

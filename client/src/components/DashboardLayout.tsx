@@ -32,6 +32,7 @@ const menuItems = [
   { icon: Users, label: "Students", path: "/students", id: "students" },
   { icon: GraduationCap, label: "Seat Planning", path: "/seat-availability", id: "seats" },
   { icon: FileText, label: "Reports", path: "/reports", id: "reports" },
+  { icon: Users, label: "Users", path: "/users", id: "users", adminOnly: true },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

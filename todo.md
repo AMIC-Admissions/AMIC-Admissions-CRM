@@ -289,12 +289,13 @@
 - [x] Integrate tabbed form modal
 - [x] Add Import/Export buttons
 
-### Import/Export
-- [ ] Create Import page component (future enhancement - placeholder button only)
-- [ ] Build Excel upload with validation (future enhancement)
-- [x] Apply File Complete and Seat Reserved logic
+### Import/Export (MANDATORY)
+- [ ] Create Import page/dialog component with file upload
+- [ ] Build Excel (.xlsx) parser and row validator
+- [ ] Implement error handling and invalid row reporting
+- [ ] Apply File Complete and Seat Reserved logic on import
+- [ ] Test import with sample Excel data
 - [x] Create Export functionality (CSV) - working
-- [ ] Test with sample data (future enhancement)
 
 ### Search & Edit
 - [ ] Add global search in header (future enhancement)
@@ -303,19 +304,21 @@
 - [x] Trigger seat logic on update
 - [x] Add validation
 
-### Seat Availability Page
+### Seat Availability Page (MANDATORY)
 - [x] Create Seat Availability page
 - [x] Add School/Grade/Gender filters
-- [x] Display Capacity/Reserved/Available
-- [ ] Show all classes from seat_master (future enhancement)
-- [ ] Add real-time updates (future enhancement)
+- [ ] Show ALL seat_master classes including empty ones
+- [ ] Display Capacity/Reserved/Available for all classes
+- [ ] Fix query to return all seat_master records
 
-### Authentication & Users
+### Authentication & Users (MANDATORY)
 - [x] Implement Manus OAuth authentication
 - [x] Add role-based access control (admin/user)
 - [x] Protect all routes with adminProcedure
-- [ ] Create users management page (future enhancement)
-- [x] JWT login not needed - using OAuth instead
+- [ ] Create Users Management page (/users) for admins
+- [ ] Implement user creation with role assignment
+- [ ] Implement user activation/deactivation
+- [ ] Build users table with actions
 
 ### Final Testing
 - [x] Test all dashboard calculations
