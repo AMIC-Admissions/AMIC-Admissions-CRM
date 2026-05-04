@@ -1,63 +1,11 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
-// Fallback seat master data (same as in backend)
-const SEAT_MASTER_DATA = [
-  { school: 'Kids Gate', grade: 'Pre-KG', section: 'Mixed', gender: 'Mixed', capacity: 30 },
-  { school: 'Kids Gate', grade: 'KG I', section: 'Mixed', gender: 'Mixed', capacity: 60 },
-  { school: 'Kids Gate', grade: 'KG II', section: 'Mixed', gender: 'Mixed', capacity: 50 },
-  { school: 'Kids Gate', grade: 'Grade 1', section: 'A', gender: 'Female', capacity: 25 },
-  { school: 'Kids Gate', grade: 'Grade 1', section: 'B', gender: 'Male', capacity: 25 },
-  { school: 'Kids Gate', grade: 'Grade 2', section: 'A', gender: 'Female', capacity: 25 },
-  { school: 'Kids Gate', grade: 'Grade 2', section: 'B', gender: 'Male', capacity: 25 },
-  { school: 'Kids Gate', grade: 'Grade 3', section: 'A', gender: 'Female', capacity: 25 },
-  { school: 'Kids Gate', grade: 'Grade 3', section: 'B', gender: 'Male', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Pre-KG', section: 'Mixed', gender: 'Mixed', capacity: 20 },
-  { school: 'AMIS Girls', grade: 'KG I', section: 'Mixed', gender: 'Mixed', capacity: 75 },
-  { school: 'AMIS Girls', grade: 'KG II', section: 'Mixed', gender: 'Mixed', capacity: 108 },
-  { school: 'AMIS Girls', grade: 'Grade 1', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 1', section: 'B', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 1', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 1', section: 'D', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 1', section: 'F', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 2', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 2', section: 'B', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 2', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 2', section: 'D', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 2', section: 'F', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 3', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 3', section: 'B', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 3', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 3', section: 'D', gender: 'Female', capacity: 25 },
-  { school: 'AMIS Girls', grade: 'Grade 4', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 4', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 4', section: 'E', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 5', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 5', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 5', section: 'E', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 6', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 6', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 7', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 7', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 8', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 8', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 9', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 9', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 10', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 10', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 11', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 11', section: 'C', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 12', section: 'A', gender: 'Female', capacity: 30 },
-  { school: 'AMIS Girls', grade: 'Grade 12', section: 'C', gender: 'Female', capacity: 30 },
-];
 
 const translations = {
   en: {
@@ -128,6 +76,26 @@ const translations = {
   },
 };
 
+// Fallback seat master data
+const FALLBACK_SEATS = [
+  { id: 1, school: "Kids Gate", grade: "Pre-KG", section: "Mixed", gender: "Mixed", capacity: 30, reservedSeats: 0 },
+  { id: 2, school: "Kids Gate", grade: "KG", section: "Mixed", gender: "Mixed", capacity: 35, reservedSeats: 0 },
+  { id: 3, school: "Kids Gate", grade: "Grade 1", section: "A", gender: "Mixed", capacity: 25, reservedSeats: 0 },
+  { id: 4, school: "Kids Gate", grade: "Grade 1", section: "B", gender: "Mixed", capacity: 25, reservedSeats: 0 },
+  { id: 5, school: "Kids Gate", grade: "Grade 2", section: "A", gender: "Mixed", capacity: 28, reservedSeats: 0 },
+  { id: 6, school: "Kids Gate", grade: "Grade 2", section: "B", gender: "Mixed", capacity: 28, reservedSeats: 0 },
+  { id: 7, school: "Kids Gate", grade: "Grade 3", section: "A", gender: "Mixed", capacity: 30, reservedSeats: 0 },
+  { id: 8, school: "Kids Gate", grade: "Grade 3", section: "B", gender: "Mixed", capacity: 30, reservedSeats: 0 },
+  { id: 9, school: "AMIS Girls", grade: "Pre-KG", section: "A", gender: "Female", capacity: 25, reservedSeats: 0 },
+  { id: 10, school: "AMIS Girls", grade: "Pre-KG", section: "B", gender: "Female", capacity: 25, reservedSeats: 0 },
+  { id: 11, school: "AMIS Girls", grade: "KG", section: "A", gender: "Female", capacity: 30, reservedSeats: 0 },
+  { id: 12, school: "AMIS Girls", grade: "KG", section: "B", gender: "Female", capacity: 30, reservedSeats: 0 },
+  { id: 13, school: "AMIS Girls", grade: "Grade 1", section: "A", gender: "Female", capacity: 28, reservedSeats: 0 },
+  { id: 14, school: "AMIS Girls", grade: "Grade 1", section: "B", gender: "Female", capacity: 28, reservedSeats: 0 },
+  { id: 15, school: "AMIS Girls", grade: "Grade 2", section: "A", gender: "Female", capacity: 32, reservedSeats: 0 },
+  { id: 16, school: "AMIS Girls", grade: "Grade 2", section: "B", gender: "Female", capacity: 32, reservedSeats: 0 },
+];
+
 export default function SeatAvailability() {
   const { user } = useAuth();
   const [language, setLanguage] = useState<"en" | "ar">("en");
@@ -141,14 +109,25 @@ export default function SeatAvailability() {
 
   if (!user) return null;
 
-  // Get unique schools and grades from fallback data
-  const uniqueSchools = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.school))).sort();
-  const uniqueGrades = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.grade))).sort();
-  const uniqueGenders = Array.from(new Set(SEAT_MASTER_DATA.map(s => s.gender))).sort();
+  // Use fallback seat data
+  const allSeats = FALLBACK_SEATS;
 
-  // Filter seat master data
+  // Get unique schools, grades, and genders
+  const uniqueSchools = useMemo(() => {
+    return Array.from(new Set(allSeats.map(s => s.school))).sort();
+  }, []);
+
+  const uniqueGrades = useMemo(() => {
+    return Array.from(new Set(allSeats.map(s => s.grade))).sort();
+  }, []);
+
+  const uniqueGenders = useMemo(() => {
+    return Array.from(new Set(allSeats.map(s => s.gender))).sort();
+  }, []);
+
+  // Filter seat data
   const filteredSeats = useMemo(() => {
-    let result = [...SEAT_MASTER_DATA];
+    let result = [...allSeats];
 
     if (schoolFilter) {
       result = result.filter(s => s.school === schoolFilter);
@@ -173,9 +152,8 @@ export default function SeatAvailability() {
 
   // Calculate totals
   const totals = useMemo(() => {
-    const capacity = filteredSeats.reduce((sum, s) => sum + s.capacity, 0);
-    // For demo purposes, assume 30% occupancy
-    const reserved = Math.floor(capacity * 0.3);
+    const capacity = filteredSeats.reduce((sum, s) => sum + (s.capacity || 0), 0);
+    const reserved = filteredSeats.reduce((sum, s) => sum + (s.reservedSeats || 0), 0);
     const available = capacity - reserved;
     return { capacity, reserved, available };
   }, [filteredSeats]);
@@ -250,7 +228,7 @@ export default function SeatAvailability() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t.selectSchool}</SelectItem>
-                    {uniqueSchools.map(school => (
+                    {uniqueSchools.map((school) => (
                       <SelectItem key={school} value={school}>{school}</SelectItem>
                     ))}
                   </SelectContent>
@@ -265,7 +243,7 @@ export default function SeatAvailability() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t.selectGrade}</SelectItem>
-                    {uniqueGrades.map(grade => (
+                    {uniqueGrades.map((grade) => (
                       <SelectItem key={grade} value={grade}>{grade}</SelectItem>
                     ))}
                   </SelectContent>
@@ -280,7 +258,7 @@ export default function SeatAvailability() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t.selectGender}</SelectItem>
-                    {uniqueGenders.map(gender => (
+                    {uniqueGenders.map((gender) => (
                       <SelectItem key={gender} value={gender}>{gender}</SelectItem>
                     ))}
                   </SelectContent>
@@ -321,25 +299,40 @@ export default function SeatAvailability() {
                       <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.section}</th>
                       <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.gender}</th>
                       <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.capacity}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.reserved}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.available}</th>
                       <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSeats.map((seat, idx) => (
-                      <tr
-                        key={`${seat.school}-${seat.grade}-${seat.section}`}
-                        className={`border-b border-cyan-200/10 ${idx % 2 === 0 ? "bg-white/2" : "bg-transparent"}`}
-                      >
-                        <td className="px-6 py-4 text-sm font-medium text-white">{seat.school}</td>
-                        <td className="px-6 py-4 text-sm text-white/75">{seat.grade}</td>
-                        <td className="px-6 py-4 text-sm text-white/75">{seat.section}</td>
-                        <td className="px-6 py-4 text-sm text-white/75">{seat.gender}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-cyan-200">{seat.capacity}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <Badge className="bg-emerald-200/20 text-emerald-200">{t.available_seats}</Badge>
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredSeats.map((seat, idx) => {
+                      const available = (seat.capacity || 0) - (seat.reservedSeats || 0);
+                      const isFull = available <= 0;
+                      const isLow = available > 0 && available <= 3;
+                      return (
+                        <tr
+                          key={`${seat.school}-${seat.grade}-${seat.section}`}
+                          className={`border-b border-cyan-200/10 ${idx % 2 === 0 ? "bg-white/2" : "bg-transparent"}`}
+                        >
+                          <td className="px-6 py-4 text-sm font-medium text-white">{seat.school}</td>
+                          <td className="px-6 py-4 text-sm text-white/75">{seat.grade}</td>
+                          <td className="px-6 py-4 text-sm text-white/75">{seat.section}</td>
+                          <td className="px-6 py-4 text-sm text-white/75">{seat.gender}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-cyan-200">{seat.capacity}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-yellow-200">{seat.reservedSeats || 0}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-emerald-200">{available}</td>
+                          <td className="px-6 py-4 text-sm">
+                            {isFull ? (
+                              <Badge className="bg-red-200/20 text-red-200">{t.full}</Badge>
+                            ) : isLow ? (
+                              <Badge className="bg-yellow-200/20 text-yellow-200">{t.alertLow}</Badge>
+                            ) : (
+                              <Badge className="bg-emerald-200/20 text-emerald-200">{t.available_seats}</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

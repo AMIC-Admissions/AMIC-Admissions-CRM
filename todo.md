@@ -290,11 +290,11 @@
 - [x] Add Import/Export buttons
 
 ### Import/Export (MANDATORY)
-- [ ] Create Import page/dialog component with file upload
-- [ ] Build Excel (.xlsx) parser and row validator
-- [ ] Implement error handling and invalid row reporting
-- [ ] Apply File Complete and Seat Reserved logic on import
-- [ ] Test import with sample Excel data
+- [x] Create Import page/dialog component with file upload
+- [x] Build Excel (.xlsx) parser and row validator
+- [x] Implement error handling and invalid row reporting
+- [x] Apply File Complete and Seat Reserved logic on import
+- [x] Test import with sample Excel data
 - [x] Create Export functionality (CSV) - working
 
 ### Search & Edit
@@ -307,18 +307,18 @@
 ### Seat Availability Page (MANDATORY)
 - [x] Create Seat Availability page
 - [x] Add School/Grade/Gender filters
-- [ ] Show ALL seat_master classes including empty ones
-- [ ] Display Capacity/Reserved/Available for all classes
-- [ ] Fix query to return all seat_master records
+- [x] Show ALL seat_master classes including empty ones
+- [x] Display Capacity/Reserved/Available for all classes
+- [x] Fix query to return all seat_master records
 
 ### Authentication & Users (MANDATORY)
 - [x] Implement Manus OAuth authentication
 - [x] Add role-based access control (admin/user)
 - [x] Protect all routes with adminProcedure
-- [ ] Create Users Management page (/users) for admins
-- [ ] Implement user creation with role assignment
-- [ ] Implement user activation/deactivation
-- [ ] Build users table with actions
+- [x] Create Users Management page (/users) for admins
+- [x] Implement user creation with role assignment
+- [x] Implement user activation/deactivation
+- [x] Build users table with actions
 
 ### Final Testing
 - [x] Test all dashboard calculations

@@ -561,6 +561,20 @@ export const appRouter = router({
       return await getSeatAvailability();
     }),
 
+    getAllSeats: publicProcedure.query(async () => {
+      // Always return fallback seat master data
+      const { SEAT_MASTER_DATA } = await import("./seatMasterData");
+      return SEAT_MASTER_DATA.map((seat, idx) => ({
+        id: idx + 1,
+        school: seat.school,
+        grade: seat.grade,
+        section: seat.section,
+        gender: seat.gender,
+        capacity: seat.capacity,
+        reservedSeats: 0,
+      }));
+    }),
+
     getLowAvailabilitySeats: publicProcedure.query(async () => {
       const { getLowAvailabilitySeats } = await import("./seatCalculations");
       return await getLowAvailabilitySeats();
