@@ -315,7 +315,7 @@
 - [x] Add role-based access control (admin/user)
 - [x] Protect all routes with adminProcedure
 - [ ] Create users management page (future enhancement)
-- [ ] Create JWT login page (not needed - using OAuth)
+- [x] JWT login not needed - using OAuth instead
 
 ### Final Testing
 - [x] Test all dashboard calculations
