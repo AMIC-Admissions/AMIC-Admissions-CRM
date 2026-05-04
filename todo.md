@@ -308,11 +308,11 @@
 - [x] Create Seat Availability page
 - [x] Add School/Grade/Gender filters
 - [x] Show ALL seat_master classes including empty ones
-- [ ] CRITICAL: Fix reserved seats calculation - connect to students table
-- [ ] Calculate reserved = COUNT(students WHERE school=X AND grade=Y AND Seat Reserved='Reserved')
-- [ ] Calculate available = capacity - reserved
-- [ ] Verify calculations show real data (not all zeros)
-- [ ] Test dynamic updates when students are added/edited/imported
+- [x] CRITICAL: Fix reserved seats calculation - connect to students table
+- [x] Calculate reserved = COUNT(students WHERE school=X AND grade=Y AND Seat Reserved='Reserved')
+- [x] Calculate available = capacity - reserved
+- [x] Verify calculations show real data (not all zeros)
+- [x] Test dynamic updates when students are added/edited/imported
 
 ### Authentication & Users (MANDATORY)
 - [x] Implement Manus OAuth authentication

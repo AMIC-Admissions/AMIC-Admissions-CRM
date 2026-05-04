@@ -7,6 +7,7 @@ import { SEAT_MASTER_DATA } from "./seatMasterData";
  * Get seat availability for all seats in seat_master
  * Calculates reserved and available seats based on actual student count
  * With resilient fallback logic for database unavailability
+ * Handles students with NULL sections by assigning to first section per school/grade
  */
 export async function getSeatAvailability() {
   try {
@@ -44,20 +45,94 @@ export async function getSeatAvailability() {
       allSeats = SEAT_MASTER_DATA;
     }
 
-    // For each seat, map to response format (skip database queries for performance)
-    const seatsWithAvailability = allSeats.map((seat: any) => ({
-      ...seat,
-      reserved: 0,  // Skip database queries for now - show 0 reserved
-      available: seat.capacity,
-      occupancyPercent: 0,
-    }));
+    // Get all reserved student counts grouped by school/grade/section
+    let reservedCounts: any[] = [];
+    try {
+      reservedCounts = await db
+        .select({
+          school: students.school,
+          grade: students.grade,
+          section: students.section,
+          count: sql`COUNT(*)`
+        })
+        .from(students)
+        .where(eq(students.seatReserved, true))
+        .groupBy(students.school, students.grade, students.section);
+      console.log(`[SeatCalc] Retrieved reserved counts for ${reservedCounts.length} seat groups`);
+    } catch (err) {
+      console.warn("[SeatCalc] Failed to get reserved counts, using 0 for all seats");
+      reservedCounts = [];
+    }
+
+    // Build maps for quick lookup
+    const reservedMap = new Map(); // "school|grade|section" => count
+    const nullSectionCounts = new Map(); // "school|grade" => count of students with NULL section
+    
+    for (const row of reservedCounts) {
+      if (row.section === null) {
+        // Track students with NULL sections
+        const sgKey = `${row.school}|${row.grade}`;
+        nullSectionCounts.set(sgKey, row.count || 0);
+      } else {
+        // Track students with specific sections
+        const key = `${row.school}|${row.grade}|${row.section}`;
+        reservedMap.set(key, row.count || 0);
+      }
+    }
+
+    // Build a map of seats by school/grade to find first section
+    const seatsBySchoolGrade = new Map();
+    for (const seat of allSeats) {
+      const sgKey = `${seat.school}|${seat.grade}`;
+      if (!seatsBySchoolGrade.has(sgKey)) {
+        seatsBySchoolGrade.set(sgKey, []);
+      }
+      seatsBySchoolGrade.get(sgKey).push(seat);
+    }
+
+    // For each seat, calculate reserved and available
+    const seatsWithAvailability = [];
+    let totalReserved = 0;
+
+    for (const seat of allSeats) {
+      const key = `${seat.school}|${seat.grade}|${seat.section}`;
+      let reserved = reservedMap.get(key) || 0;
+      
+      // If no exact match and there are students with NULL sections,
+      // assign them to the first section for this school/grade
+      if (reserved === 0) {
+        const sgKey = `${seat.school}|${seat.grade}`;
+        const nullCount = nullSectionCounts.get(sgKey) || 0;
+        if (nullCount > 0) {
+          const seatsForGrade = seatsBySchoolGrade.get(sgKey) || [];
+          const isFirstSection = seatsForGrade[0]?.id === seat.id;
+          if (isFirstSection) {
+            reserved = nullCount;
+            console.log(`[SeatCalc] Assigned ${nullCount} NULL-section students to ${seat.school}/${seat.grade}/${seat.section}`);
+          }
+        }
+      }
+      
+      const available = seat.capacity - reserved;
+      totalReserved += reserved;
+
+      seatsWithAvailability.push({
+        ...seat,
+        reserved,
+        available,
+        occupancyPercent: Math.round((reserved / seat.capacity) * 100),
+      });
+    }
+
+    const totalCapacity = allSeats.reduce((sum: number, s: any) => sum + s.capacity, 0);
+    const totalAvailable = totalCapacity - totalReserved;
 
     return {
       success: true,
       seats: seatsWithAvailability,
-      totalCapacity: allSeats.reduce((sum: number, s: any) => sum + s.capacity, 0),
-      totalReserved: 0,
-      totalAvailable: allSeats.reduce((sum: number, s: any) => sum + s.capacity, 0),
+      totalCapacity,
+      totalReserved,
+      totalAvailable,
     };
   } catch (error) {
     console.error("[SeatCalc] Critical error:", error);
