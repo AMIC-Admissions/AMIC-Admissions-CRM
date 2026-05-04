@@ -242,9 +242,7 @@ export async function releaseSeat(school: string, grade: string, section: string
         )
       );
 
-    return true;
-  } catch (error) {
-    console.error("[Database] Seat release error:", error);
+    return true  } catch (error) {
     return false;
   }
 }
@@ -454,7 +452,7 @@ export async function getDashboardData(filters: {
       seatUtilization: { bySchool, byGrade, bySection },
     };
   } catch (error) {
-    console.error("[Database] Dashboard data error:", error);
+    console.error("[Dashboard] Query error (using fallback data):", error instanceof Error ? error.message : error);
     return {
       totalStudents: 0,
       registered: 0,

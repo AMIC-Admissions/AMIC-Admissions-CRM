@@ -279,6 +279,35 @@ export default function Students() {
     }
   };
 
+  const handleImportStudents = () => {
+    toast.info('Import feature coming soon - use Add Student button');
+  };
+
+  const handleExportStudents = () => {
+    if (!students.data || students.data.length === 0) {
+      toast.error('No students to export');
+      return;
+    }
+    const headers = ['Name', 'ID', 'School', 'Grade', 'Status', 'Payment Status'];
+    const rows = students.data.map((s: any) => [
+      s.name,
+      s.studentId,
+      s.school,
+      s.grade,
+      s.status,
+      s.paymentStatus,
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `students_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success('Students exported successfully');
+  };
+
   const submitStudent = (event: FormEvent) => {
     event.preventDefault();
     const payload = {
@@ -321,12 +350,26 @@ export default function Students() {
               <h1 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">{t.title}</h1>
               <p className="mt-2 text-base font-medium text-white/75">{t.subtitle}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 className="border border-cyan-200/40 bg-cyan-200 text-[#031844] hover:bg-white"
                 onClick={() => setLang(lang === "en" ? "ar" : "en")}
               >
                 {lang === "en" ? "العربية" : "English"}
+              </Button>
+              <Button
+                className="border border-emerald-200/40 bg-emerald-200 text-[#031844] hover:bg-white"
+                onClick={handleImportStudents}
+              >
+                <Upload className="h-4 w-4" />
+                Import
+              </Button>
+              <Button
+                className="border border-blue-200/40 bg-blue-200 text-[#031844] hover:bg-white"
+                onClick={handleExportStudents}
+              >
+                <Download className="h-4 w-4" />
+                Export
               </Button>
               <Button
                 className="border border-cyan-200/40 bg-cyan-200 text-[#031844] hover:bg-white"
