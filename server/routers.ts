@@ -137,7 +137,17 @@ export const appRouter = router({
         }
 
         // Check if seat should be reserved
-        const shouldReserve = shouldReserveSeat(input.studentType, input.paymentStatus, input.paymentMethod || null);
+        const shouldReserve = shouldReserveSeat(
+          input.studentType,
+          input.paymentStatus,
+          input.paymentMethod || null,
+          input.firstInstallment,
+          input.secondInstallment,
+          input.fullPayment,
+          input.promissoryNote,
+          input.tamara,
+          input.jeelPay
+        );
 
         // Create student
         const newStudent = await db.insert(students).values({
@@ -151,6 +161,12 @@ export const appRouter = router({
           studentType: input.studentType,
           paymentStatus: input.paymentStatus,
           paymentMethod: input.paymentMethod,
+          firstInstallment: input.firstInstallment || false,
+          secondInstallment: input.secondInstallment || false,
+          fullPayment: input.fullPayment || false,
+          promissoryNote: input.promissoryNote || false,
+          tamara: input.tamara || false,
+          jeelPay: input.jeelPay || false,
           seatReserved: shouldReserve,
           status: "Registered",
         });
@@ -173,10 +189,17 @@ export const appRouter = router({
           nationality: z.string().optional(),
           school: z.string().optional(),
           grade: z.string().optional(),
+          studentType: z.string().optional(),
           status: z.enum(["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"]).optional(),
           paymentStatus: z.enum(["Pending", "Paid"]).optional(),
           paymentMethod: z.enum(["Cash", "Tamara", "JeelPay", "Promissory Note"]).optional(),
           fileComplete: z.boolean().optional(),
+          firstInstallment: z.boolean().optional(),
+          secondInstallment: z.boolean().optional(),
+          fullPayment: z.boolean().optional(),
+          promissoryNote: z.boolean().optional(),
+          tamara: z.boolean().optional(),
+          jeelPay: z.boolean().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -206,8 +229,51 @@ export const appRouter = router({
         if (input.paymentStatus !== undefined) updateData.paymentStatus = input.paymentStatus;
         if (input.paymentMethod !== undefined) updateData.paymentMethod = input.paymentMethod;
         if (input.fileComplete !== undefined) updateData.fileComplete = input.fileComplete;
+        
+        // Handle payment fields
+        if (input.firstInstallment !== undefined) updateData.firstInstallment = input.firstInstallment;
+        if (input.secondInstallment !== undefined) updateData.secondInstallment = input.secondInstallment;
+        if (input.fullPayment !== undefined) updateData.fullPayment = input.fullPayment;
+        if (input.promissoryNote !== undefined) updateData.promissoryNote = input.promissoryNote;
+        if (input.tamara !== undefined) updateData.tamara = input.tamara;
+        if (input.jeelPay !== undefined) updateData.jeelPay = input.jeelPay;
+        if (input.studentType !== undefined) updateData.studentType = input.studentType;
+
+        // Recalculate seatReserved based on updated values
+        const studentType = input.studentType || currentStudent.studentType;
+        const firstInstallment = input.firstInstallment !== undefined ? input.firstInstallment : currentStudent.firstInstallment;
+        const secondInstallment = input.secondInstallment !== undefined ? input.secondInstallment : currentStudent.secondInstallment;
+        const fullPayment = input.fullPayment !== undefined ? input.fullPayment : currentStudent.fullPayment;
+        const promissoryNote = input.promissoryNote !== undefined ? input.promissoryNote : currentStudent.promissoryNote;
+        const tamara = input.tamara !== undefined ? input.tamara : currentStudent.tamara;
+        const jeelPay = input.jeelPay !== undefined ? input.jeelPay : currentStudent.jeelPay;
+
+        const newSeatReserved = shouldReserveSeat(
+          studentType,
+          undefined,
+          undefined,
+          firstInstallment,
+          secondInstallment,
+          fullPayment,
+          promissoryNote,
+          tamara,
+          jeelPay
+        );
+
+        const oldSeatReserved = currentStudent.seatReserved;
+        updateData.seatReserved = newSeatReserved;
+
+        // Handle seat reservation/release changes
+        if (!oldSeatReserved && newSeatReserved) {
+          // Reserve seat
+          await reserveSeat(currentStudent.school, currentStudent.grade, currentStudent.section!);
+        } else if (oldSeatReserved && !newSeatReserved) {
+          // Release seat
+          await releaseSeat(currentStudent.school, currentStudent.grade, currentStudent.section!);
+        }
 
         await db.update(students).set(updateData).where(eq(students.id, input.id));
+
 
         return { success: true };
       }),

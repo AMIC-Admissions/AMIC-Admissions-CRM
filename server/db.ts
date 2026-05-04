@@ -250,19 +250,28 @@ export async function releaseSeat(school: string, grade: string, section: string
 /**
  * Check if a student should have a seat reserved based on rules.
  */
+/**
+ * Calculate if a student should have seatReserved = TRUE
+ * Based on: studentType = "Re-Registration" OR any payment field = TRUE
+ */
 export function shouldReserveSeat(
   studentType: string,
-  paymentStatus: string,
-  paymentMethod: string | null
+  paymentStatus?: string,
+  paymentMethod?: string | null,
+  firstInstallment?: boolean,
+  secondInstallment?: boolean,
+  fullPayment?: boolean,
+  promissoryNote?: boolean,
+  tamara?: boolean,
+  jeelPay?: boolean
 ): boolean {
-  // Condition 1: Student Type = Re-Registration or Enrollment
-  if (["Re-Registration", "Enrollment"].includes(studentType)) {
+  // Condition 1: Student Type = Re-Registration
+  if (studentType === "Re-Registration") {
     return true;
   }
 
-  // Condition 2: Payment conditions met
-  const paymentMethods = ["Cash", "Tamara", "JeelPay", "Promissory Note"];
-  if (paymentStatus === "Paid" || paymentMethods.includes(paymentMethod || "")) {
+  // Condition 2: Any payment field = TRUE
+  if (firstInstallment || secondInstallment || fullPayment || promissoryNote || tamara || jeelPay) {
     return true;
   }
 

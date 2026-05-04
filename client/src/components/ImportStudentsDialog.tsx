@@ -17,6 +17,12 @@ interface ImportRow {
   studentType?: string;
   paymentStatus?: string;
   paymentMethod?: string;
+  firstInstallment?: boolean;
+  secondInstallment?: boolean;
+  fullPayment?: boolean;
+  promissoryNote?: boolean;
+  tamara?: boolean;
+  jeelPay?: boolean;
   error?: string;
   rowNumber?: number;
 }
@@ -52,6 +58,15 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
       const invalid: ImportRow[] = [];
 
       data.forEach((row, index) => {
+        // Helper function to parse boolean values from Excel
+        const parseBoolean = (value: any): boolean => {
+          if (typeof value === 'boolean') return value;
+          if (typeof value === 'string') {
+            return value.toLowerCase() === 'yes' || value.toLowerCase() === 'true' || value === '1';
+          }
+          return value === 1 || value === true;
+        };
+
         const importRow: ImportRow = {
           name: row.Name || row.name || "",
           studentId: row["Student ID"] || row.studentId || "",
@@ -62,6 +77,12 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
           studentType: row["Student Type"] || row.studentType || "New Admission",
           paymentStatus: row["Payment Status"] || row.paymentStatus || "Pending",
           paymentMethod: row["Payment Method"] || row.paymentMethod || "Cash",
+          firstInstallment: parseBoolean(row["1st Installment"] || row.firstInstallment || false),
+          secondInstallment: parseBoolean(row["2nd Installment"] || row.secondInstallment || false),
+          fullPayment: parseBoolean(row["Full Payment"] || row.fullPayment || false),
+          promissoryNote: parseBoolean(row["Promissory Note"] || row.promissoryNote || false),
+          tamara: parseBoolean(row.Tamara || row.tamara || false),
+          jeelPay: parseBoolean(row["Jeel Pay"] || row.jeelPay || false),
           rowNumber: index + 2,
         };
 
@@ -132,6 +153,12 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             studentType: studentTypeValue as any,
             paymentStatus: (row.paymentStatus as "Paid" | "Pending") || "Pending",
             paymentMethod: paymentMethodValue as any,
+            firstInstallment: row.firstInstallment || false,
+            secondInstallment: row.secondInstallment || false,
+            fullPayment: row.fullPayment || false,
+            promissoryNote: row.promissoryNote || false,
+            tamara: row.tamara || false,
+            jeelPay: row.jeelPay || false,
           });
           successCount++;
         } catch (error) {
@@ -193,6 +220,7 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             <div className="text-xs text-white/50">
               <p className="font-semibold">Required columns: Name, Student ID, School, Grade</p>
               <p>Optional: Gender, Nationality, Student Type, Payment Status, Payment Method</p>
+              <p>Payment fields (Yes/No or True/False): 1st Installment, 2nd Installment, Full Payment, Promissory Note, Tamara, Jeel Pay</p>
             </div>
           </div>
         )}
