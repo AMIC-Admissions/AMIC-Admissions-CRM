@@ -29,7 +29,7 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/", id: "dashboard" },
-  { icon: Users, label: "Students", path: "/", id: "students" },
+  { icon: Users, label: "Students", path: "/students", id: "students" },
   { icon: GraduationCap, label: "Seat Planning", path: "/seat-availability", id: "seats" },
   { icon: FileText, label: "Reports", path: "/reports", id: "reports" },
 ];
