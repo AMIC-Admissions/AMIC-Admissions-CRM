@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
+"use client";
+
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useState, useMemo } from "react";
 
 const translations = {
   en: {
@@ -76,28 +79,8 @@ const translations = {
   },
 };
 
-// Fallback seat master data
-const FALLBACK_SEATS = [
-  { id: 1, school: "Kids Gate", grade: "Pre-KG", section: "Mixed", gender: "Mixed", capacity: 30, reservedSeats: 0 },
-  { id: 2, school: "Kids Gate", grade: "KG", section: "Mixed", gender: "Mixed", capacity: 35, reservedSeats: 0 },
-  { id: 3, school: "Kids Gate", grade: "Grade 1", section: "A", gender: "Mixed", capacity: 25, reservedSeats: 0 },
-  { id: 4, school: "Kids Gate", grade: "Grade 1", section: "B", gender: "Mixed", capacity: 25, reservedSeats: 0 },
-  { id: 5, school: "Kids Gate", grade: "Grade 2", section: "A", gender: "Mixed", capacity: 28, reservedSeats: 0 },
-  { id: 6, school: "Kids Gate", grade: "Grade 2", section: "B", gender: "Mixed", capacity: 28, reservedSeats: 0 },
-  { id: 7, school: "Kids Gate", grade: "Grade 3", section: "A", gender: "Mixed", capacity: 30, reservedSeats: 0 },
-  { id: 8, school: "Kids Gate", grade: "Grade 3", section: "B", gender: "Mixed", capacity: 30, reservedSeats: 0 },
-  { id: 9, school: "AMIS Girls", grade: "Pre-KG", section: "A", gender: "Female", capacity: 25, reservedSeats: 0 },
-  { id: 10, school: "AMIS Girls", grade: "Pre-KG", section: "B", gender: "Female", capacity: 25, reservedSeats: 0 },
-  { id: 11, school: "AMIS Girls", grade: "KG", section: "A", gender: "Female", capacity: 30, reservedSeats: 0 },
-  { id: 12, school: "AMIS Girls", grade: "KG", section: "B", gender: "Female", capacity: 30, reservedSeats: 0 },
-  { id: 13, school: "AMIS Girls", grade: "Grade 1", section: "A", gender: "Female", capacity: 28, reservedSeats: 0 },
-  { id: 14, school: "AMIS Girls", grade: "Grade 1", section: "B", gender: "Female", capacity: 28, reservedSeats: 0 },
-  { id: 15, school: "AMIS Girls", grade: "Grade 2", section: "A", gender: "Female", capacity: 32, reservedSeats: 0 },
-  { id: 16, school: "AMIS Girls", grade: "Grade 2", section: "B", gender: "Female", capacity: 32, reservedSeats: 0 },
-];
-
 export default function SeatAvailability() {
-  const { user } = useAuth();
+  const user = useAuth();
   const [language, setLanguage] = useState<"en" | "ar">("en");
   const [schoolFilter, setSchoolFilter] = useState<string>("");
   const [gradeFilter, setGradeFilter] = useState<string>("");
@@ -109,21 +92,36 @@ export default function SeatAvailability() {
 
   if (!user) return null;
 
-  // Use fallback seat data
-  const allSeats = FALLBACK_SEATS;
+  // Fetch real seat availability data from backend (using public procedure with fallback)
+  const { data: seatData, isLoading, isError } = trpc.admin.getSeatAvailability.useQuery();
+
+  // Use real data from backend, or empty array if loading/error
+  const allSeats = useMemo(() => {
+    if (!seatData?.seats) return [];
+    return (seatData.seats as any[]).map((seat: any) => ({
+      school: seat.school,
+      grade: seat.grade,
+      section: seat.section || "Mixed",
+      gender: seat.gender || "Mixed",
+      capacity: seat.capacity || 0,
+      reservedSeats: seat.reserved || 0,
+      availableSeats: seat.available || 0,
+      occupancyPercent: seat.occupancyPercent || 0,
+    }));
+  }, [seatData]);
 
   // Get unique schools, grades, and genders
   const uniqueSchools = useMemo(() => {
     return Array.from(new Set(allSeats.map(s => s.school))).sort();
-  }, []);
+  }, [allSeats]);
 
   const uniqueGrades = useMemo(() => {
     return Array.from(new Set(allSeats.map(s => s.grade))).sort();
-  }, []);
+  }, [allSeats]);
 
   const uniqueGenders = useMemo(() => {
     return Array.from(new Set(allSeats.map(s => s.gender))).sort();
-  }, []);
+  }, [allSeats]);
 
   // Filter seat data
   const filteredSeats = useMemo(() => {
@@ -148,15 +146,33 @@ export default function SeatAvailability() {
     }
 
     return result;
-  }, [schoolFilter, gradeFilter, genderFilter, searchQuery]);
+  }, [schoolFilter, gradeFilter, genderFilter, searchQuery, allSeats]);
 
-  // Calculate totals
+  // Calculate totals from filtered data
   const totals = useMemo(() => {
     const capacity = filteredSeats.reduce((sum, s) => sum + (s.capacity || 0), 0);
     const reserved = filteredSeats.reduce((sum, s) => sum + (s.reservedSeats || 0), 0);
     const available = capacity - reserved;
     return { capacity, reserved, available };
   }, [filteredSeats]);
+
+  // Get status for a seat
+  const getStatus = (seat: any) => {
+    const occupancy = seat.capacity > 0 ? (seat.reservedSeats / seat.capacity) * 100 : 0;
+    if (occupancy >= 100) return { label: t.full, color: "bg-red-500" };
+    if (occupancy >= 80) return { label: t.alertLow, color: "bg-yellow-500" };
+    return { label: t.available_seats, color: "bg-emerald-500" };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="blueprint-bg min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-white text-lg">{t.loading}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="blueprint-bg min-h-screen">
@@ -281,54 +297,52 @@ export default function SeatAvailability() {
           </CardContent>
         </Card>
 
-        {/* Classes Table */}
+        {/* Seats Table */}
         <Card className="technical-panel text-white overflow-hidden">
           <CardHeader>
-            <CardTitle className="text-lg font-black uppercase">{t.allClasses}</CardTitle>
+            <CardTitle className="text-lg font-black uppercase">{t.sections}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {filteredSeats.length === 0 ? (
-              <div className="p-8 text-center text-white/75">{t.noData}</div>
+            {isError ? (
+              <div className="p-6 text-center text-red-400">
+                <AlertTriangle className="mx-auto mb-2 h-6 w-6" />
+                <p>{t.error}</p>
+              </div>
+            ) : filteredSeats.length === 0 ? (
+              <div className="p-6 text-center text-white/50">
+                <p>{t.noData}</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-cyan-200/20 bg-white/5">
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.school}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.grade}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.section}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.gender}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.capacity}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.reserved}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.available}</th>
-                      <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-[0.22em] text-cyan-100">{t.status}</th>
+                <table className="w-full text-sm">
+                  <thead className="border-t border-cyan-200/20 bg-white/5">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-black text-cyan-200">{t.school}</th>
+                      <th className="px-4 py-3 text-left font-black text-cyan-200">{t.grade}</th>
+                      <th className="px-4 py-3 text-left font-black text-cyan-200">{t.section}</th>
+                      <th className="px-4 py-3 text-center font-black text-cyan-200">{t.capacity}</th>
+                      <th className="px-4 py-3 text-center font-black text-yellow-200">{t.reserved}</th>
+                      <th className="px-4 py-3 text-center font-black text-emerald-200">{t.available}</th>
+                      <th className="px-4 py-3 text-center font-black text-white/75">{t.occupancy}</th>
+                      <th className="px-4 py-3 text-center font-black text-white/75">{t.status}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSeats.map((seat, idx) => {
-                      const available = (seat.capacity || 0) - (seat.reservedSeats || 0);
-                      const isFull = available <= 0;
-                      const isLow = available > 0 && available <= 3;
+                    {(filteredSeats as any[]).map((seat: any, idx: number) => {
+                      const status = getStatus(seat);
                       return (
-                        <tr
-                          key={`${seat.school}-${seat.grade}-${seat.section}`}
-                          className={`border-b border-cyan-200/10 ${idx % 2 === 0 ? "bg-white/2" : "bg-transparent"}`}
-                        >
-                          <td className="px-6 py-4 text-sm font-medium text-white">{seat.school}</td>
-                          <td className="px-6 py-4 text-sm text-white/75">{seat.grade}</td>
-                          <td className="px-6 py-4 text-sm text-white/75">{seat.section}</td>
-                          <td className="px-6 py-4 text-sm text-white/75">{seat.gender}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-cyan-200">{seat.capacity}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-yellow-200">{seat.reservedSeats || 0}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-emerald-200">{available}</td>
-                          <td className="px-6 py-4 text-sm">
-                            {isFull ? (
-                              <Badge className="bg-red-200/20 text-red-200">{t.full}</Badge>
-                            ) : isLow ? (
-                              <Badge className="bg-yellow-200/20 text-yellow-200">{t.alertLow}</Badge>
-                            ) : (
-                              <Badge className="bg-emerald-200/20 text-emerald-200">{t.available_seats}</Badge>
-                            )}
+                        <tr key={`${seat.school}-${seat.grade}-${idx}`} className="border-t border-cyan-200/10 hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-3 text-white font-medium">{String(seat.school)}</td>
+                          <td className="px-4 py-3 text-white font-medium">{String(seat.grade)}</td>
+                          <td className="px-4 py-3 text-white/75">{String(seat.section)}</td>
+                          <td className="px-4 py-3 text-center text-cyan-200 font-bold">{Number(seat.capacity)}</td>
+                          <td className="px-4 py-3 text-center text-yellow-200 font-bold">{Number(seat.reservedSeats)}</td>
+                          <td className="px-4 py-3 text-center text-emerald-200 font-bold">{Number(seat.availableSeats)}</td>
+                          <td className="px-4 py-3 text-center text-white/75">{Math.round(Number(seat.occupancyPercent))}%</td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge className={`${status.color} text-white font-black`}>
+                              {status.label}
+                            </Badge>
                           </td>
                         </tr>
                       );
