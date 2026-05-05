@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -169,3 +169,41 @@ export const seatMaster = mysqlTable("seat_master", {
 
 export type SeatMaster = typeof seatMaster.$inferSelect;
 export type InsertSeatMaster = typeof seatMaster.$inferInsert;
+
+
+/**
+ * Dynamic Fields Configuration Table
+ * Stores metadata for dynamic fields that can be added to students
+ */
+export const fieldsConfig = mysqlTable("fields_config", {
+  id: int("id").autoincrement().primaryKey(),
+  fieldKey: varchar("field_key", { length: 100 }).notNull().unique(), // e.g., "gender", "nationality", "student_type"
+  fieldLabel: varchar("field_label", { length: 255 }).notNull(), // e.g., "Gender", "Nationality"
+  fieldType: mysqlEnum("field_type", ["text", "select", "checkbox", "date", "number"]).notNull(), // Field type
+  options: json("options").$type<{ label: string; value: string }[]>(), // For select fields: [{label: "Male", value: "Male"}, ...]
+  required: boolean("required").default(false).notNull(), // Is this field required?
+  section: varchar("section", { length: 100 }).default("general").notNull(), // Form section: general, enrollment, payment, documents, parent
+  visible: boolean("visible").default(true).notNull(), // Is this field visible in forms?
+  order: int("order").default(0).notNull(), // Display order in forms
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FieldsConfig = typeof fieldsConfig.$inferSelect;
+export type InsertFieldsConfig = typeof fieldsConfig.$inferInsert;
+
+/**
+ * Student Dynamic Data Table
+ * Stores dynamic field values for each student
+ */
+export const studentDynamicData = mysqlTable("student_dynamic_data", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: int("student_id").notNull(), // Foreign key to students table
+  fieldKey: varchar("field_key", { length: 100 }).notNull(), // Reference to fieldsConfig.fieldKey
+  value: text("value"), // The actual value stored as text (can be JSON for complex types)
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StudentDynamicData = typeof studentDynamicData.$inferSelect;
+export type InsertStudentDynamicData = typeof studentDynamicData.$inferInsert;

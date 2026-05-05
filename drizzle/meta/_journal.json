@@ -43,6 +43,13 @@
       "when": 1777748202970,
       "tag": "0005_petite_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777958546314,
+      "tag": "0006_tranquil_smasher",
+      "breakpoints": true
     }
   ]
 }

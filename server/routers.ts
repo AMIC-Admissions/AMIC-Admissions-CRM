@@ -1,5 +1,6 @@
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { dynamicFieldsRouter } from "./dynamicFieldsRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { getDb, assignSection, reserveSeat, releaseSeat, shouldReserveSeat, getDashboardData } from "./db";
 import { generateReport, getReportFilterOptions } from "./reports";
@@ -14,6 +15,7 @@ import { eq, and, sql, like } from "drizzle-orm";
 
 export const appRouter = router({
   system: systemRouter,
+  dynamicFields: dynamicFieldsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
