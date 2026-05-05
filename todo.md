@@ -348,3 +348,17 @@
 - [x] Seed initial dynamic fields (Gender, Nationality, Student Type)
 - [x] Test backend APIs without UI changes
 - [x] Verify existing student system remains functional
+
+
+### Phase 2: Dynamic Form Integration
+- [ ] Add backend procedure to save dynamic field values (saveDynamicFieldValue)
+- [ ] Add backend procedure to load dynamic field values (getDynamicFieldValues)
+- [ ] Create DynamicFieldsSection component for rendering dynamic fields
+- [ ] Implement field type rendering (text, number, date, select, boolean)
+- [ ] Integrate dynamic fields into StudentFormTabs component
+- [ ] Test dynamic field rendering in Add Student form
+- [ ] Test dynamic field rendering in Edit Student form
+- [ ] Test dynamic field value persistence
+- [ ] Test dynamic field value loading on edit
+- [ ] Verify existing form fields remain intact
+- [ ] Verify form layout remains clean and organized

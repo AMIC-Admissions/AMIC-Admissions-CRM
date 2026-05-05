@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StudentFormTabs } from "@/components/StudentFormTabs";
 import { ImportStudentsDialog } from "@/components/ImportStudentsDialog";
+import { DynamicFieldsSection } from "@/components/DynamicFieldsSection";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
@@ -190,6 +191,7 @@ export default function Students() {
   const [lang, setLang] = useState<Lang>("en");
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState<StudentForm>(emptyForm);
+  const [dynamicValues, setDynamicValues] = useState<Record<string, string | null>>({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -214,10 +216,19 @@ export default function Students() {
     );
   }, [students.data, searchQuery]);
 
+  const saveDynamicFieldsMutation = trpc.dynamicFields.saveDynamicFieldValue.useMutation();
+
+  const saveDynamicFields = (studentId: number) => {
+    Object.entries(dynamicValues).forEach(([fieldKey, value]) => {
+      saveDynamicFieldsMutation.mutate({ studentId, fieldKey, value });
+    });
+  };
+
   const createStudent = trpc.admissions.createStudent.useMutation({
     onSuccess: async () => {
       toast.success(t.studentCreated);
       setForm(emptyForm);
+      setDynamicValues({});
       setEditModalOpen(false);
       await utils.admissions.listStudents.invalidate();
     },
@@ -227,7 +238,12 @@ export default function Students() {
   const updateStudent = trpc.admissions.updateStudent.useMutation({
     onSuccess: async () => {
       toast.success(t.studentUpdated);
+      // Save dynamic field values for updated student
+      if (form.id) {
+        saveDynamicFields(form.id);
+      }
       setForm(emptyForm);
+      setDynamicValues({});
       setEditModalOpen(false);
       await utils.admissions.listStudents.invalidate();
     },
@@ -246,6 +262,7 @@ export default function Students() {
 
   const handleAddStudent = () => {
     setForm(emptyForm);
+    setDynamicValues({});
     setEditModalOpen(true);
   };
 
@@ -328,8 +345,12 @@ export default function Students() {
       paymentStatus: form.paymentStatus,
       paymentMethod: form.paymentMethod,
     };
-    if (form.id) updateStudent.mutate({ id: form.id, ...payload });
-    else createStudent.mutate(payload);
+    
+    if (form.id) {
+      updateStudent.mutate({ id: form.id, ...payload });
+    } else {
+      createStudent.mutate(payload);
+    }
   };
 
   if (!isAdmin) {

@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { User, BookOpen, ClipboardCheck, CreditCard, FileText, Users } from "lucide-react";
+import { User, BookOpen, ClipboardCheck, CreditCard, FileText, Users, Settings } from "lucide-react";
+import { DynamicFieldsSection } from "./DynamicFieldsSection";
 
 interface StudentFormTabsProps {
   formData: any;
@@ -15,9 +16,12 @@ interface StudentFormTabsProps {
   onSubmit: (e: React.FormEvent) => void;
   isLoading?: boolean;
   isEditing?: boolean;
+  studentId?: number;
+  dynamicValues?: Record<string, string | null>;
+  onDynamicChange?: (fieldKey: string, value: string | null) => void;
 }
 
-export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = false, isEditing = false }: StudentFormTabsProps) {
+export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = false, isEditing = false, studentId, dynamicValues, onDynamicChange }: StudentFormTabsProps) {
   const [activeTab, setActiveTab] = useState("student-info");
 
   const handleInputChange = (field: string, value: any) => {
@@ -31,7 +35,7 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-slate-800 border-slate-700">
+        <TabsList className="grid w-full grid-cols-7 bg-slate-800 border-slate-700">
           <TabsTrigger value="student-info" className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Student</span>
@@ -55,6 +59,10 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
           <TabsTrigger value="parent" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Parent</span>
+          </TabsTrigger>
+          <TabsTrigger value="dynamic" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Custom</span>
           </TabsTrigger>
         </TabsList>
 
@@ -477,8 +485,16 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
+        {/* DYNAMIC FIELDS */}
+        <TabsContent value="dynamic" className="space-y-4">
+          <DynamicFieldsSection
+            studentId={studentId}
+            values={dynamicValues}
+            onChange={onDynamicChange}
+          />
+        </TabsContent>
+      </Tabs>
       {/* Submit Button */}
       <div className="flex gap-4 justify-end pt-4">
         <Button

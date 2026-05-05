@@ -1,9 +1,9 @@
-import { adminProcedure, router } from "./_core/trpc";
+import { adminProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { fieldsConfig, studentDynamicData } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export const dynamicFieldsRouter = router({
   // List all field configurations
@@ -83,6 +83,81 @@ export const dynamicFieldsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const result = await db.delete(fieldsConfig).where(eq(fieldsConfig.id, input.id));
+      return result;
+    }),
+
+  // Save a dynamic field value for a student
+  saveDynamicFieldValue: protectedProcedure
+    .input(
+      z.object({
+        studentId: z.number(),
+        fieldKey: z.string(),
+        value: z.string().nullable(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      // Check if record already exists
+      const existing = await db
+        .select()
+        .from(studentDynamicData)
+        .where(and(eq(studentDynamicData.studentId, input.studentId), eq(studentDynamicData.fieldKey, input.fieldKey)));
+
+      if (existing.length > 0) {
+        // Update existing record
+        const result = await db
+          .update(studentDynamicData)
+          .set({ value: input.value })
+          .where(
+            and(
+              eq(studentDynamicData.studentId, input.studentId),
+              eq(studentDynamicData.fieldKey, input.fieldKey)
+            )
+          );
+        return result;
+      } else {
+        // Insert new record
+        const result = await db.insert(studentDynamicData).values({
+          studentId: input.studentId,
+          fieldKey: input.fieldKey,
+          value: input.value,
+        });
+        return result;
+      }
+    }),
+
+  // Get dynamic field values for a student
+  getDynamicFieldValues: protectedProcedure
+    .input(z.object({ studentId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const values = await db
+        .select()
+        .from(studentDynamicData)
+        .where(eq(studentDynamicData.studentId, input.studentId));
+
+      // Convert to key-value object
+      const result: Record<string, string | null> = {};
+      values.forEach((v) => {
+        result[v.fieldKey] = v.value;
+      });
+      return result;
+    }),
+
+  // Delete all dynamic field values for a student
+  deleteDynamicFieldValues: protectedProcedure
+    .input(z.object({ studentId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+      const result = await db
+        .delete(studentDynamicData)
+        .where(eq(studentDynamicData.studentId, input.studentId));
       return result;
     }),
 });
