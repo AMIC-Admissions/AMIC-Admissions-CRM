@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, studentId, name, school, grade, studentType FROM students ORDER BY id DESC LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT id, studentId, name, school, grade, studentType FROM students ORDER BY id DESC LIMIT 1",
+  "rows": [
+    {
+      "id": "180002",
+      "studentId": "FINAL-WORKING-001",
+      "name": "Final Working Student",
+      "school": "AMIS Girls",
+      "grade": "",
+      "studentType": "New Admission"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstudentId\tname\tschool\tgrade\tstudentType\n180002\tFINAL-WORKING-001\tFinal Working Student\tAMIS Girls\t\tNew Admission\n",
+  "stderr": "",
+  "execution_time_ms": 1948
+}

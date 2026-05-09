@@ -216,7 +216,14 @@ export default function Students() {
     );
   }, [students.data, searchQuery]);
 
-  const saveDynamicFieldsMutation = trpc.dynamicFields.saveDynamicFieldValue.useMutation();
+  const saveDynamicFieldsMutation = trpc.dynamicFields.saveDynamicFieldValue.useMutation({
+    onError: (error) => {
+      console.error('saveDynamicFieldValue error:', error);
+    },
+    onSuccess: (result) => {
+      console.log('saveDynamicFieldValue success:', result);
+    }
+  });
 
   const saveDynamicFields = (studentId: number) => {
     Object.entries(dynamicValues).forEach(([fieldKey, value]) => {
@@ -225,8 +232,14 @@ export default function Students() {
   };
 
   const createStudent = trpc.admissions.createStudent.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (result: any) => {
       toast.success(t.studentCreated);
+      // Save dynamic field values for newly created student
+      if (result?.insertId) {
+        Object.entries(dynamicValues).forEach(([fieldKey, value]) => {
+          saveDynamicFieldsMutation.mutate({ studentId: result.insertId, fieldKey, value });
+        });
+      }
       setForm(emptyForm);
       setDynamicValues({});
       setEditModalOpen(false);
@@ -543,56 +556,19 @@ export default function Students() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={submitStudent} className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <Label className="text-white">Student ID *</Label>
-                <Input
-                  value={form.studentId}
-                  onChange={(e) => setForm({ ...form, studentId: e.target.value })}
-                  className="border-cyan-200/30 bg-white/5 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-white">Student Name *</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="border-cyan-200/30 bg-white/5 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-white">School *</Label>
-                <Input
-                  value={form.school}
-                  onChange={(e) => setForm({ ...form, school: e.target.value })}
-                  className="border-cyan-200/30 bg-white/5 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-white">Grade *</Label>
-                <Input
-                  value={form.grade}
-                  onChange={(e) => setForm({ ...form, grade: e.target.value })}
-                  className="border-cyan-200/30 bg-white/5 text-white"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-white">Payment Status *</Label>
-                <select
-                  value={form.paymentStatus}
-                  onChange={(e) => setForm({ ...form, paymentStatus: e.target.value as PaymentStatus })}
-                  className="w-full border border-cyan-200/30 bg-white/5 text-white px-3 py-2 rounded"
-                  required
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Paid">Paid</option>
-                </select>
-              </div>
-            </div>
+            {/* Use StudentFormTabs for all form fields */}
+            <StudentFormTabs
+              formData={form}
+              onFormChange={(key, value) => setForm({ ...form, [key]: value })}
+              onSubmit={submitStudent}
+              isEditing={!!form.id}
+              studentId={form.id}
+              dynamicValues={dynamicValues}
+              onDynamicChange={(fieldKey, value) => {
+                setDynamicValues(prev => ({ ...prev, [fieldKey]: value }));
+              }}
+            />
+            
             <div className="flex gap-3 justify-end">
               <Button
                 type="button"

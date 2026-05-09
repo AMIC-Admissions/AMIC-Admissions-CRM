@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -134,18 +134,35 @@ export function DynamicFieldsSection({ studentId, values = {}, onChange }: Dynam
                   )}
 
                   {field.fieldType === "select" && field.options && (
-                    <Select value={value || ""} onValueChange={(v) => handleFieldChange(field.fieldKey, v)}>
-                      <SelectTrigger id={field.fieldKey}>
-                        <SelectValue placeholder={`Select ${field.fieldLabel.toLowerCase()}`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option: any) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      id={field.fieldKey}
+                      value={value || ""}
+                      onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
+                      required={isRequired}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">{`Select ${field.fieldLabel.toLowerCase()}`}</option>
+                      {(() => {
+                        try {
+                          const options = typeof field.options === 'string' ? JSON.parse(field.options) : field.options;
+                          if (Array.isArray(options)) {
+                            return options.map((option: any) => {
+                              const optionValue = typeof option === 'string' ? option : option.value;
+                              const optionLabel = typeof option === 'string' ? option : option.label || option.value;
+                              return (
+                                <option key={optionValue} value={optionValue}>
+                                  {optionLabel}
+                                </option>
+                              );
+                            });
+                          }
+                          return null;
+                        } catch (e) {
+                          console.error('Failed to parse options:', e);
+                          return null;
+                        }
+                      })()}
+                    </select>
                   )}
                 </div>
               );

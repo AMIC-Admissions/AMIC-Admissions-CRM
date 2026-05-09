@@ -93,7 +93,7 @@ export async function getUserByOpenId(openId: string) {
  */
 
 export type SectionAssignmentResult = {
-  section: string;
+  section: string | null;
   success: boolean;
   message: string;
 };
@@ -110,7 +110,7 @@ export async function assignSection(
 ): Promise<SectionAssignmentResult> {
   const db = await getDb();
   if (!db) {
-    return { section: "", success: false, message: "Database not available" };
+    return { section: null, success: false, message: "Database not available" };
   }
 
   try {
@@ -130,7 +130,8 @@ export async function assignSection(
       .orderBy(seats.section);
 
     if (availableSections.length === 0) {
-      return { section: "", success: false, message: "No sections available for this school/grade" };
+      // Section assignment is optional - return success with NULL section
+      return { section: null, success: true, message: "No sections available, student created without section" };
     }
 
     let validSections: Seat[] = [];
@@ -148,7 +149,7 @@ export async function assignSection(
     }
 
     if (validSections.length === 0) {
-      return { section: "", success: false, message: `No available sections for ${gender} in ${grade}` };
+      return { section: null, success: false, message: `No available sections for ${gender} in ${grade}` };
     }
 
     // Find section with least reserved seats
@@ -159,7 +160,7 @@ export async function assignSection(
     return { section: targetSection.section, success: true, message: "Section assigned successfully" };
   } catch (error) {
     console.error("[Database] Section assignment error:", error);
-    return { section: "", success: false, message: "Error assigning section" };
+    return { section: null, success: false, message: "Error assigning section" };
   }
 }
 
@@ -197,7 +198,10 @@ export async function isSeatAvailable(school: string, grade: string, section: st
 /**
  * Reserve a seat for a student.
  */
-export async function reserveSeat(school: string, grade: string, section: string): Promise<boolean> {
+export async function reserveSeat(school: string, grade: string, section: string | null): Promise<boolean> {
+  // If section is NULL, skip reservation (student created without section assignment)
+  if (!section) return true;
+  
   const db = await getDb();
   if (!db) return false;
 
@@ -226,7 +230,10 @@ export async function reserveSeat(school: string, grade: string, section: string
 /**
  * Release a reserved seat.
  */
-export async function releaseSeat(school: string, grade: string, section: string): Promise<boolean> {
+export async function releaseSeat(school: string, grade: string, section: string | null): Promise<boolean> {
+  // If section is NULL, skip release (student was created without section assignment)
+  if (!section) return true;
+  
   const db = await getDb();
   if (!db) return false;
 
@@ -242,7 +249,8 @@ export async function releaseSeat(school: string, grade: string, section: string
         )
       );
 
-    return true  } catch (error) {
+    return true;
+  } catch (error) {
     return false;
   }
 }

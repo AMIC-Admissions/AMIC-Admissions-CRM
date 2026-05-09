@@ -33,7 +33,7 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-7 bg-slate-800 border-slate-700">
           <TabsTrigger value="student-info" className="flex items-center gap-2">
@@ -495,16 +495,6 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
           />
         </TabsContent>
       </Tabs>
-      {/* Submit Button */}
-      <div className="flex gap-4 justify-end pt-4">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {isLoading ? "Saving..." : isEditing ? "Update Student" : "Create Student"}
-        </Button>
-      </div>
-    </form>
+    </div>
   );
 }

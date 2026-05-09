@@ -1,0 +1,322 @@
+{
+  "query": "DESCRIBE students;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute DESCRIBE students;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "studentId",
+      "Type": "varchar(50)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "name",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "gender",
+      "Type": "enum('Male','Female')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nationality",
+      "Type": "enum('Saudi','Non-Saudi')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "Saudi",
+      "Extra": ""
+    },
+    {
+      "Field": "school",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "grade",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('Registered','Assessed','Passed','Enrolled','Withdrawn')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "Registered",
+      "Extra": ""
+    },
+    {
+      "Field": "registrationDate",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentStatus",
+      "Type": "enum('Pending','Paid')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "Pending",
+      "Extra": ""
+    },
+    {
+      "Field": "paymentMethod",
+      "Type": "enum('Cash','Tamara','JeelPay','Promissory Note')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "fileComplete",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "section",
+      "Type": "varchar(10)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "studentType",
+      "Type": "enum('New','Re-Registration','Enrollment')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "New",
+      "Extra": ""
+    },
+    {
+      "Field": "seatReserved",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "dateOfBirth",
+      "Type": "date",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dateOfJoin",
+      "Type": "date",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "assessed",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "passed",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "reAssessment",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "passedRe",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "registration",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "enrollment",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "transfer",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "firstInstallment",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "secondInstallment",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "fullPayment",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "promissoryNote",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "tamara",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "jeelPay",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "docsSigned",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "requirementsSubmitted",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "fatherId",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "fatherMobile",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "motherId",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "motherMobile",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "notes",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nstudentId\tvarchar(50)\tNO\tUNI\tNULL\t\nname\tvarchar(255)\tNO\t\tNULL\t\ngender\tenum('Male','Female')\tNO\t\tNULL\t\nnationality\tenum('Saudi','Non-Saudi')\tNO\t\tSaudi\t\nschool\tvarchar(255)\tNO\t\tNULL\t\ngrade\tvarchar(255)\tNO\t\tNULL\t\nstatus\tenum('Registered','Assessed','Passed','Enrolled','Withdrawn')\tNO\t\tRegistered\t\nregistrationDate\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\npaymentStatus\tenum('Pending','Paid')\tNO\t\tPending\t\npaymentMethod\tenum('Cash','Tamara','JeelPay','Promissory Note')\tYES\t\tNULL\t\nfileComplete\ttinyint(1)\tNO\t\t0\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nsection\tvarchar(10)\tYES\t\tNULL\t\nstudentType\tenum('New','Re-Registration','Enrollment')\tNO\t\tNew\t\nseatReserved\ttinyint(1)\tNO\t\t0\t\ndateOfBirth\tdate\tYES\t\tNULL\t\ndateOfJoin\tdate\tYES\t\tNULL\t\nassessed\ttinyint(1)\tNO\t\t0\t\npassed\ttinyint(1)\tNO\t\t0\t\nreAssessment\ttinyint(1)\tNO\t\t0\t\npassedRe\ttinyint(1)\tNO\t\t0\t\nregistration\ttinyint(1)\tNO\t\t0\t\nenrollment\ttinyint(1)\tNO\t\t0\t\ntransfer\ttinyint(1)\tNO\t\t0\t\nfirstInstallment\ttinyint(1)\tNO\t\t0\t\nsecondInstallment\ttinyint(1)\tNO\t\t0\t\nfullPayment\ttinyint(1)\tNO\t\t0\t\npromissoryNote\ttinyint(1)\tNO\t\t0\t\ntamara\ttinyint(1)\tNO\t\t0\t\njeelPay\ttinyint(1)\tNO\t\t0\t\ndocsSigned\ttinyint(1)\tNO\t\t0\t\nrequirementsSubmitted\ttinyint(1)\tNO\t\t0\t\nfatherId\tvarchar(50)\tYES\t\tNULL\t\nfatherMobile\tvarchar(20)\tYES\t\tNULL\t\nmotherId\tvarchar(50)\tYES\t\tNULL\t\nmotherMobile\tvarchar(20)\tYES\t\tNULL\t\nnotes\ttext\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 1964
+}

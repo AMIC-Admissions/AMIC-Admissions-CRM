@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE students SET studentType = 'New Admission' WHERE studentType = 'New';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute UPDATE students SET studentType = 'New Admission' WHERE studentType = 'New';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column '%s' at row %d"
+  ]
+}

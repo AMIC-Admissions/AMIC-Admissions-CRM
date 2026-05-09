@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'studentType';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' AND COLUMN_NAME = 'studentType';",
+  "rows": [
+    {
+      "COLUMN_TYPE": "enum('New','Re-Registration','Enrollment')"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_TYPE\nenum('New','Re-Registration','Enrollment')\n",
+  "stderr": "",
+  "execution_time_ms": 1890
+}

@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE fields_config SET options = JSON_ARRAY(JSON_OBJECT('label', 'Bus', 'value', 'Bus'), JSON_OBJECT('label', 'Car', 'value', 'Car')) WHERE field_key = 'transportation';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute UPDATE fields_config SET options = JSON_ARRAY(JSON_OBJECT('label', 'Bus', 'value', 'Bus'), JSON_OBJECT('label', 'Car', 'value', 'Car')) WHERE field_key = 'transportation';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1958
+}

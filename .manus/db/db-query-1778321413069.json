@@ -1,0 +1,22 @@
+{
+  "query": "SELECT sdd.field_key, sdd.value FROM student_dynamic_data sdd WHERE sdd.student_id IN (SELECT id FROM students WHERE studentId = 'TEST-DYN-007') ORDER BY sdd.field_key;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT sdd.field_key, sdd.value FROM student_dynamic_data sdd WHERE sdd.student_id IN (SELECT id FROM students WHERE studentId = 'TEST-DYN-007') ORDER BY sdd.field_key;",
+  "rows": [
+    {
+      "field_key": "gender",
+      "value": "Female"
+    },
+    {
+      "field_key": "nationality",
+      "value": "Non-Saudi"
+    },
+    {
+      "field_key": "transportation",
+      "value": "Bus"
+    }
+  ],
+  "messages": [],
+  "stdout": "field_key\tvalue\ngender\tFemale\nnationality\tNon-Saudi\ntransportation\tBus\n",
+  "stderr": "",
+  "execution_time_ms": 1881
+}
