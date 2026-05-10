@@ -93,7 +93,7 @@ export async function getUserByOpenId(openId: string) {
  */
 
 export type SectionAssignmentResult = {
-  section: string | null;
+  section: string;
   success: boolean;
   message: string;
 };
@@ -110,7 +110,7 @@ export async function assignSection(
 ): Promise<SectionAssignmentResult> {
   const db = await getDb();
   if (!db) {
-    return { section: null, success: false, message: "Database not available" };
+    return { section: "", success: false, message: "Database not available" };
   }
 
   try {
@@ -130,8 +130,7 @@ export async function assignSection(
       .orderBy(seats.section);
 
     if (availableSections.length === 0) {
-      // Section assignment is optional - return success with NULL section
-      return { section: null, success: true, message: "No sections available, student created without section" };
+      return { section: "", success: false, message: "No sections available for this school/grade" };
     }
 
     let validSections: Seat[] = [];
@@ -149,7 +148,7 @@ export async function assignSection(
     }
 
     if (validSections.length === 0) {
-      return { section: null, success: false, message: `No available sections for ${gender} in ${grade}` };
+      return { section: "", success: false, message: `No available sections for ${gender} in ${grade}` };
     }
 
     // Find section with least reserved seats
@@ -160,7 +159,7 @@ export async function assignSection(
     return { section: targetSection.section, success: true, message: "Section assigned successfully" };
   } catch (error) {
     console.error("[Database] Section assignment error:", error);
-    return { section: null, success: false, message: "Error assigning section" };
+    return { section: "", success: false, message: "Error assigning section" };
   }
 }
 
@@ -198,10 +197,7 @@ export async function isSeatAvailable(school: string, grade: string, section: st
 /**
  * Reserve a seat for a student.
  */
-export async function reserveSeat(school: string, grade: string, section: string | null): Promise<boolean> {
-  // If section is NULL, skip reservation (student created without section assignment)
-  if (!section) return true;
-  
+export async function reserveSeat(school: string, grade: string, section: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
@@ -230,10 +226,7 @@ export async function reserveSeat(school: string, grade: string, section: string
 /**
  * Release a reserved seat.
  */
-export async function releaseSeat(school: string, grade: string, section: string | null): Promise<boolean> {
-  // If section is NULL, skip release (student was created without section assignment)
-  if (!section) return true;
-  
+export async function releaseSeat(school: string, grade: string, section: string): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
@@ -249,8 +242,7 @@ export async function releaseSeat(school: string, grade: string, section: string
         )
       );
 
-    return true;
-  } catch (error) {
+    return true  } catch (error) {
     return false;
   }
 }
@@ -300,12 +292,16 @@ export async function getDashboardData(filters: {
     return {
       totalStudents: 0,
       registered: 0,
+      assessed: 0,
+      passed: 0,
       enrolled: 0,
       seatsReserved: 0,
       seatsAvailable: 0,
       dailyRegistrations: [],
       weeklyComparison: { thisWeek: 0, lastWeek: 0, growth: 0 },
       paymentSummary: { cash: 0, tamara: 0, jeelPay: 0, paid: 0, pending: 0 },
+      nationalitySummary: { saudi: 0, nonSaudi: 0, total: 0 },
+      nationalityBySchool: [],
       seatUtilization: { bySchool: [], byGrade: [], bySection: [] },
     };
   }
@@ -332,6 +328,20 @@ export async function getDashboardData(filters: {
       .from(students)
       .where(whereClause ? and(whereClause, eq(students.status, "Registered")) : eq(students.status, "Registered"));
     const registered = registeredResult[0]?.count ?? 0;
+
+    // Assessed students
+    const assessedResult = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(students)
+      .where(whereClause ? and(whereClause, eq(students.status, "Assessed")) : eq(students.status, "Assessed"));
+    const assessed = assessedResult[0]?.count ?? 0;
+
+    // Passed students
+    const passedResult = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(students)
+      .where(whereClause ? and(whereClause, eq(students.status, "Passed")) : eq(students.status, "Passed"));
+    const passed = passedResult[0]?.count ?? 0;
 
     // Enrolled students
     const enrolledResult = await db
@@ -425,6 +435,39 @@ export async function getDashboardData(filters: {
       if (row.status === "Pending") pending += row.count;
     });
 
+    // Nationality breakdown
+    const nationalityRows = await db
+      .select({
+        nationality: students.nationality,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(students)
+      .where(whereClause)
+      .groupBy(students.nationality);
+
+    const saudi    = nationalityRows.find(r => r.nationality === "Saudi")?.count ?? 0;
+    const nonSaudi = nationalityRows.find(r => r.nationality === "Non-Saudi")?.count ?? 0;
+
+    // Nationality breakdown per school
+    const nationalityBySchoolRows = await db
+      .select({
+        school:      students.school,
+        nationality: students.nationality,
+        count:       sql<number>`COUNT(*)`,
+      })
+      .from(students)
+      .where(whereClause)
+      .groupBy(students.school, students.nationality)
+      .orderBy(students.school);
+
+    const nationalityBySchool: { school: string; saudi: number; nonSaudi: number }[] = [];
+    nationalityBySchoolRows.forEach(row => {
+      let entry = nationalityBySchool.find(e => e.school === row.school);
+      if (!entry) { entry = { school: row.school, saudi: 0, nonSaudi: 0 }; nationalityBySchool.push(entry); }
+      if (row.nationality === "Saudi") entry.saudi += row.count;
+      else                             entry.nonSaudi += row.count;
+    });
+
     // Seat utilization by school
     const bySchool = await db
       .select({
@@ -460,12 +503,16 @@ export async function getDashboardData(filters: {
     return {
       totalStudents,
       registered,
+      assessed,
+      passed,
       enrolled,
       seatsReserved,
       seatsAvailable,
       dailyRegistrations: dailyRegistrations.map(d => ({ date: d.date, count: d.count })),
       weeklyComparison: { thisWeek, lastWeek, growth },
       paymentSummary: { cash, tamara, jeelPay, paid, pending },
+      nationalitySummary: { saudi, nonSaudi, total: saudi + nonSaudi },
+      nationalityBySchool,
       seatUtilization: { bySchool, byGrade, bySection },
     };
   } catch (error) {
@@ -473,12 +520,16 @@ export async function getDashboardData(filters: {
     return {
       totalStudents: 0,
       registered: 0,
+      assessed: 0,
+      passed: 0,
       enrolled: 0,
       seatsReserved: 0,
       seatsAvailable: 0,
       dailyRegistrations: [],
       weeklyComparison: { thisWeek: 0, lastWeek: 0, growth: 0 },
       paymentSummary: { cash: 0, tamara: 0, jeelPay: 0, paid: 0, pending: 0 },
+      nationalitySummary: { saudi: 0, nonSaudi: 0, total: 0 },
+      nationalityBySchool: [],
       seatUtilization: { bySchool: [], byGrade: [], bySection: [] },
     };
   }
