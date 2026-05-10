@@ -12,7 +12,6 @@ import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { students, seats } from "../drizzle/schema";
 import { eq, and, sql, like } from "drizzle-orm";
-import { writeAuditLog, diffObjects } from "./auditService";
 
 export const appRouter = router({
   system: systemRouter,
@@ -34,11 +33,10 @@ export const appRouter = router({
       .input(
         z.object({
           school: z.string().optional(),
-          grade:  z.string().optional(),
+          grade: z.string().optional(),
           status: z.string().optional(),
-          search: z.string().optional(),
-          limit:  z.number().min(1).max(200).optional().default(25),
-          offset: z.number().min(0).optional().default(0),
+          limit: z.number().optional().default(100),
+          offset: z.number().optional().default(0),
         })
       )
       .query(async ({ input }) => {
@@ -47,29 +45,19 @@ export const appRouter = router({
 
         const conditions = [];
         if (input.school) conditions.push(eq(students.school, input.school));
-        if (input.grade)  conditions.push(eq(students.grade,  input.grade));
+        if (input.grade) conditions.push(eq(students.grade, input.grade));
         if (input.status) conditions.push(eq(students.status, input.status as any));
-        if (input.search) {
-          const pattern = `%${input.search}%`;
-          conditions.push(
-            sql`(${students.name} LIKE ${pattern} OR ${students.studentId} LIKE ${pattern} OR ${students.grade} LIKE ${pattern} OR ${students.school} LIKE ${pattern})`
-          );
-        }
 
         const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-        const [rows, countRows] = await Promise.all([
-          db.select().from(students).where(whereClause)
-            .limit(input.limit).offset(input.offset),
-          db.select({ total: sql<number>`COUNT(*)` }).from(students).where(whereClause),
-        ]);
+        const result = await db
+          .select()
+          .from(students)
+          .where(whereClause)
+          .limit(input.limit)
+          .offset(input.offset);
 
-        return {
-          data:   rows,
-          total:  countRows[0]?.total ?? 0,
-          limit:  input.limit,
-          offset: input.offset,
-        };
+        return result;
       }),
 
     // Search students by ID, Name, Grade, or Nationality
@@ -144,11 +132,9 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        // Assign section
+        // Assign section (section can be NULL if no seats available)
         const sectionResult = await assignSection(input.school, input.grade, input.gender);
-        if (!sectionResult.success) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: sectionResult.message });
-        }
+        // Don't throw error - section assignment is now optional
 
         // Check if seat should be reserved
         const shouldReserve = shouldReserveSeat(
@@ -163,15 +149,15 @@ export const appRouter = router({
           input.jeelPay
         );
 
-        // Create student
-        const newStudent = await db.insert(students).values({
+        // Create student and get the insert result with insertId
+        const insertResult = await db.insert(students).values({
           studentId: input.studentId,
           name: input.name,
           gender: input.gender,
           nationality: input.nationality,
           school: input.school,
           grade: input.grade,
-          section: sectionResult.section,
+          section: sectionResult.section || null,
           studentType: input.studentType,
           paymentStatus: input.paymentStatus,
           paymentMethod: input.paymentMethod,
@@ -185,23 +171,29 @@ export const appRouter = router({
           status: "Registered",
         });
 
-        // Reserve seat if needed
-        if (shouldReserve) {
-          await reserveSeat(input.school, input.grade, sectionResult.section!);
+        // Reserve seat if needed and section is assigned
+        if (shouldReserve && sectionResult?.section) {
+          await reserveSeat(input.school, input.grade, sectionResult.section);
         }
 
-        // Audit log
-        const insertId = (newStudent as any).insertId;
-        await writeAuditLog({
-          action:        "create",
-          studentId:     insertId ?? null,
-          studentName:   input.name,
-          studentSid:    input.studentId,
-          performedBy:   ctx.user?.id ?? null,
-          performedName: ctx.user?.name ?? ctx.user?.email ?? null,
-        });
-
-        return newStudent;
+        // Return with insertId for dynamic fields save on frontend
+        // Drizzle returns insertId directly from the insert result
+        console.log('Insert result:', JSON.stringify(insertResult, null, 2));
+        const id = (insertResult as any)?.insertId || (insertResult as any)?.[0]?.id;
+        console.log('Extracted ID:', id);
+        
+        // If still no ID, query the database to get the last inserted ID
+        let finalId = id;
+        if (!finalId) {
+          const lastStudent = await db.select({ id: students.id }).from(students).where(eq(students.studentId, input.studentId)).limit(1);
+          finalId = lastStudent?.[0]?.id;
+          console.log('Queried ID from database:', finalId);
+        }
+        
+        return {
+          insertId: finalId,
+          success: true
+        };
       }),
 
     // Update student
@@ -299,22 +291,6 @@ export const appRouter = router({
 
         await db.update(students).set(updateData).where(eq(students.id, input.id));
 
-        // Audit log — diff before vs after
-        const changes = diffObjects(
-          currentStudent as Record<string, unknown>,
-          { ...currentStudent, ...updateData }
-        );
-        if (Object.keys(changes).length > 0) {
-          await writeAuditLog({
-            action:        "update",
-            studentId:     input.id,
-            studentName:   currentStudent.name,
-            studentSid:    currentStudent.studentId,
-            performedBy:   ctx.user?.id ?? null,
-            performedName: ctx.user?.name ?? ctx.user?.email ?? null,
-            changes,
-          });
-        }
 
         return { success: true };
       }),
@@ -337,17 +313,6 @@ export const appRouter = router({
         }
 
         await db.delete(students).where(eq(students.id, input.id));
-
-        // Audit log — store full snapshot before deletion
-        await writeAuditLog({
-          action:        "delete",
-          studentId:     null,
-          studentName:   student[0].name,
-          studentSid:    student[0].studentId,
-          performedBy:   ctx.user?.id ?? null,
-          performedName: ctx.user?.name ?? ctx.user?.email ?? null,
-          snapshot:      student[0],
-        });
 
         return { success: true };
       }),
@@ -738,292 +703,6 @@ export const appRouter = router({
         incompleteFiles,
         totalCount: lowSeatAlerts.length + incompleteFiles.length,
       };
-    }),
-
-    /* ── Audit Log ── */
-    listAuditLog: adminProcedure
-      .input(z.object({
-        studentId:  z.number().optional(),
-        action:     z.enum(["create", "update", "delete"]).optional(),
-        performedBy:z.number().optional(),
-        dateFrom:   z.string().optional(),
-        dateTo:     z.string().optional(),
-        search:     z.string().optional(),
-        limit:      z.number().min(1).max(200).optional().default(50),
-        offset:     z.number().min(0).optional().default(0),
-      }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) return { data: [], total: 0 };
-        const { auditLog } = await import("../drizzle/schema");
-        const { desc, gte, lte } = await import("drizzle-orm");
-
-        const conds: any[] = [];
-        if (input.studentId)   conds.push(eq(auditLog.studentId,   input.studentId));
-        if (input.action)      conds.push(eq(auditLog.action,      input.action));
-        if (input.performedBy) conds.push(eq(auditLog.performedBy, input.performedBy));
-        if (input.dateFrom)    conds.push(gte(auditLog.createdAt, new Date(input.dateFrom)));
-        if (input.dateTo) {
-          const d = new Date(input.dateTo); d.setHours(23, 59, 59, 999);
-          conds.push(lte(auditLog.createdAt, d));
-        }
-        if (input.search) {
-          const p = `%${input.search}%`;
-          conds.push(sql`(${auditLog.studentName} LIKE ${p} OR ${auditLog.studentSid} LIKE ${p} OR ${auditLog.performedName} LIKE ${p})`);
-        }
-
-        const where = conds.length > 0 ? and(...conds) : undefined;
-
-        const [rows, countRows] = await Promise.all([
-          db.select().from(auditLog).where(where)
-            .orderBy(desc(auditLog.createdAt))
-            .limit(input.limit).offset(input.offset),
-          db.select({ total: sql<number>`COUNT(*)` }).from(auditLog).where(where),
-        ]);
-
-        return { data: rows, total: countRows[0]?.total ?? 0 };
-      }),
-
-    /* ── Report Schedule CRUD ── */
-    listSchedules: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-      const { reportSchedules } = await import("../drizzle/schema");
-      return db.select().from(reportSchedules).orderBy(reportSchedules.createdAt);
-    }),
-
-    createSchedule: adminProcedure
-      .input(z.object({
-        name:       z.string().min(1).max(120),
-        frequency:  z.enum(["daily", "weekly"]),
-        dayOfWeek:  z.number().min(0).max(6).nullable().optional(),
-        hour:       z.number().min(0).max(23),
-        recipients: z.array(z.string().email()).min(1).max(20),
-        reportType: z.enum(["summary", "at_risk", "school_comparison", "full"]),
-        filters:    z.object({ school: z.string().optional(), grade: z.string().optional() }).optional(),
-        isActive:   z.boolean().optional().default(true),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { reportSchedules } = await import("../drizzle/schema");
-        const [result] = await db.insert(reportSchedules).values({
-          name:       input.name,
-          frequency:  input.frequency,
-          dayOfWeek:  input.dayOfWeek ?? null,
-          hour:       input.hour,
-          recipients: input.recipients,
-          reportType: input.reportType,
-          filters:    input.filters ?? null,
-          isActive:   input.isActive ?? true,
-          createdBy:  ctx.user?.id ?? null,
-        });
-        return { id: (result as any).insertId };
-      }),
-
-    updateSchedule: adminProcedure
-      .input(z.object({
-        id:         z.number(),
-        name:       z.string().min(1).max(120).optional(),
-        frequency:  z.enum(["daily", "weekly"]).optional(),
-        dayOfWeek:  z.number().min(0).max(6).nullable().optional(),
-        hour:       z.number().min(0).max(23).optional(),
-        recipients: z.array(z.string().email()).min(1).max(20).optional(),
-        reportType: z.enum(["summary", "at_risk", "school_comparison", "full"]).optional(),
-        filters:    z.object({ school: z.string().optional(), grade: z.string().optional() }).optional(),
-        isActive:   z.boolean().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { reportSchedules } = await import("../drizzle/schema");
-        const { id, ...rest } = input;
-        await db.update(reportSchedules).set(rest as any).where(eq(reportSchedules.id, id));
-        return { ok: true };
-      }),
-
-    deleteSchedule: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { reportSchedules } = await import("../drizzle/schema");
-        await db.delete(reportSchedules).where(eq(reportSchedules.id, input.id));
-        return { ok: true };
-      }),
-
-    sendNow: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-        const { reportSchedules } = await import("../drizzle/schema");
-        const [sched] = await db.select().from(reportSchedules)
-          .where(eq(reportSchedules.id, input.id));
-        if (!sched) throw new TRPCError({ code: "NOT_FOUND" });
-
-        const { buildPayload } = await import("./reportScheduler") as any;
-        const { buildReportHtml } = await import("./emailService");
-        const { sendReportEmail } = await import("./emailService");
-        const { kpis, tableRows } = await buildPayload(sched);
-
-        const now     = new Date();
-        const subject = `[Manual send] ${sched.name} — ${now.toLocaleDateString("en-GB")}`;
-        const textBody = [...Object.entries(kpis).map(([k,v]) => `${k}: ${v}`)].join("\n");
-        const htmlBody = buildReportHtml({
-          title: sched.name, frequency: "Manual", data: kpis, tableRows,
-          generatedAt: now.toISOString(),
-        });
-
-        const result = await sendReportEmail({
-          to: sched.recipients as string[], subject, htmlBody, textBody,
-        });
-
-        if (result.ok) {
-          await db.update(reportSchedules).set({ lastSentAt: now })
-            .where(eq(reportSchedules.id, input.id));
-        }
-        return result;
-      }),
-
-    getAtRiskStudents: adminProcedure
-      .input(z.object({
-        daysThreshold:  z.number().min(1).max(365).optional().default(30),
-        school:         z.string().optional(),
-        grade:          z.string().optional(),
-        riskTypes:      z.array(z.enum(["no_payment", "no_assessment", "incomplete_file", "stale"])).optional(),
-      }))
-      .query(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - input.daysThreshold);
-
-        const baseConditions: any[] = [
-          // only active statuses — exclude Enrolled and Withdrawn
-          sql`${students.status} NOT IN ('Enrolled', 'Withdrawn')`,
-        ];
-        if (input.school) baseConditions.push(eq(students.school, input.school));
-        if (input.grade)  baseConditions.push(eq(students.grade,  input.grade));
-
-        const rows = await db
-          .select({
-            id:               students.id,
-            name:             students.name,
-            studentId:        students.studentId,
-            school:           students.school,
-            grade:            students.grade,
-            status:           students.status,
-            paymentStatus:    students.paymentStatus,
-            assessed:         students.assessed,
-            fileComplete:     students.fileComplete,
-            seatReserved:     students.seatReserved,
-            registrationDate: students.registrationDate,
-            fatherMobile:     students.fatherMobile,
-            notes:            students.notes,
-          })
-          .from(students)
-          .where(and(...baseConditions));
-
-        const riskTypes = input.riskTypes ?? ["no_payment", "no_assessment", "incomplete_file", "stale"];
-
-        const atRisk = rows
-          .map(s => {
-            const risks: { type: string; label: string; severity: "high" | "medium" | "low" }[] = [];
-            const daysSince = Math.floor(
-              (Date.now() - new Date(s.registrationDate).getTime()) / 86_400_000
-            );
-
-            if (riskTypes.includes("no_payment") && s.paymentStatus === "Pending")
-              risks.push({ type: "no_payment",    label: "No payment",      severity: "high"   });
-            if (riskTypes.includes("no_assessment") && !s.assessed)
-              risks.push({ type: "no_assessment", label: "Not assessed",    severity: "medium" });
-            if (riskTypes.includes("incomplete_file") && !s.fileComplete)
-              risks.push({ type: "incomplete_file", label: "File incomplete", severity: "medium" });
-            if (riskTypes.includes("stale") && daysSince >= input.daysThreshold)
-              risks.push({ type: "stale", label: `Stale ${daysSince}d`,   severity: daysSince > 60 ? "high" : "low" });
-
-            return { ...s, risks, riskScore: risks.reduce((n, r) => n + (r.severity === "high" ? 3 : r.severity === "medium" ? 2 : 1), 0), daysSince };
-          })
-          .filter(s => s.risks.length > 0)
-          .sort((a, b) => b.riskScore - a.riskScore);
-
-        return {
-          students: atRisk,
-          total:    atRisk.length,
-          byRisk: {
-            noPayment:      atRisk.filter(s => s.risks.some(r => r.type === "no_payment")).length,
-            noAssessment:   atRisk.filter(s => s.risks.some(r => r.type === "no_assessment")).length,
-            incompleteFile: atRisk.filter(s => s.risks.some(r => r.type === "incomplete_file")).length,
-            stale:          atRisk.filter(s => s.risks.some(r => r.type === "stale")).length,
-          },
-        };
-      }),
-
-    getSchoolComparison: adminProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-
-      const SCHOOLS = ["Kids Gate", "AMIS Girls", "AMIS Boys"];
-
-      const results = await Promise.all(
-        SCHOOLS.map(async (school) => {
-          const base = and(eq(students.school, school));
-
-          const [[total], [reg], [enrolled], [assessed], [passed],
-                 [paid], [pending], [fileOk], [seatRes], [saudi]] = await Promise.all([
-            db.select({ n: sql<number>`COUNT(*)` }).from(students).where(base),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.registration, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.enrollment, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.assessed, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.passed, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.paymentStatus, "Paid"))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.paymentStatus, "Pending"))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.fileComplete, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.seatReserved, true))),
-            db.select({ n: sql<number>`COUNT(*)` }).from(students)
-              .where(and(base, eq(students.nationality, "Saudi"))),
-          ]);
-
-          // Seat capacity from seat_master
-          const { seatMaster } = await import("../drizzle/schema");
-          const seatRows = await db.select({ cap: sql<number>`SUM(capacity)` })
-            .from(seatMaster).where(eq(seatMaster.school, school));
-          const capacity = seatRows[0]?.cap ?? 0;
-
-          const t = total[0]?.n ?? 0;
-          return {
-            school,
-            total:            t,
-            registered:       reg[0]?.n ?? 0,
-            enrolled:         enrolled[0]?.n ?? 0,
-            assessed:         assessed[0]?.n ?? 0,
-            passed:           passed[0]?.n ?? 0,
-            paid:             paid[0]?.n ?? 0,
-            pending:          pending[0]?.n ?? 0,
-            fileComplete:     fileOk[0]?.n ?? 0,
-            seatReserved:     seatRes[0]?.n ?? 0,
-            saudi:            saudi[0]?.n ?? 0,
-            nonSaudi:         t - (saudi[0]?.n ?? 0),
-            capacity,
-            occupancy:        capacity > 0 ? Math.round(((seatRes[0]?.n ?? 0) / capacity) * 100) : 0,
-            passRate:         assessed[0]?.n ? Math.round(((passed[0]?.n ?? 0) / assessed[0]?.n) * 100) : 0,
-            paymentRate:      t ? Math.round(((paid[0]?.n ?? 0) / t) * 100) : 0,
-            fileCompleteRate: t ? Math.round(((fileOk[0]?.n ?? 0) / t) * 100) : 0,
-          };
-        })
-      );
-
-      return results;
     }),
   }),
 });
