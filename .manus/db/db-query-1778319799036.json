@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, field_key, field_label, field_type, section, required, options FROM fields_config ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT id, field_key, field_label, field_type, section, required, options FROM fields_config ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "field_key": "gender",
+      "field_label": "Gender",
+      "field_type": "select",
+      "section": "general",
+      "required": "1",
+      "options": "[{\"label\": \"Male\", \"value\": \"Male\"}, {\"label\": \"Female\", \"value\": \"Female\"}]"
+    },
+    {
+      "id": "2",
+      "field_key": "nationality",
+      "field_label": "Nationality",
+      "field_type": "select",
+      "section": "general",
+      "required": "0",
+      "options": "[{\"label\": \"Saudi\", \"value\": \"Saudi\"}, {\"label\": \"Non-Saudi\", \"value\": \"Non-Saudi\"}]"
+    },
+    {
+      "id": "3",
+      "field_key": "student_type",
+      "field_label": "Student Type",
+      "field_type": "select",
+      "section": "enrollment",
+      "required": "1",
+      "options": "[{\"label\": \"New Admission\", \"value\": \"New Admission\"}, {\"label\": \"Enrollment\", \"value\": \"Enrollment\"}, {\"label\": \"Re-Registration\", \"value\": \"Re-Registration\"}, {\"label\": \"Transfer\", \"value\": \"Transfer\"}]"
+    },
+    {
+      "id": "30001",
+      "field_key": "transportation",
+      "field_label": "Transportation",
+      "field_type": "select",
+      "section": "Personal",
+      "required": "0",
+      "options": "\"[\\\"Bus\\\",\\\"Car\\\"]\""
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tfield_key\tfield_label\tfield_type\tsection\trequired\toptions\n1\tgender\tGender\tselect\tgeneral\t1\t[{\"label\": \"Male\", \"value\": \"Male\"}, {\"label\": \"Female\", \"value\": \"Female\"}]\n2\tnationality\tNationality\tselect\tgeneral\t0\t[{\"label\": \"Saudi\", \"value\": \"Saudi\"}, {\"label\": \"Non-Saudi\", \"value\": \"Non-Saudi\"}]\n3\tstudent_type\tStudent Type\tselect\tenrollment\t1\t[{\"label\": \"New Admission\", \"value\": \"New Admission\"}, {\"label\": \"Enrollment\", \"value\": \"Enrollment\"}, {\"label\": \"Re-Registration\", \"value\": \"Re-Registration\"}, {\"label\": \"Transfer\", \"value\": \"Transfer\"}]\n30001\ttransportation\tTransportation\tselect\tPersonal\t0\t\"[\\\"Bus\\\",\\\"Car\\\"]\"\n",
+  "stderr": "",
+  "execution_time_ms": 1839
+}

@@ -132,11 +132,9 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        // Assign section
+        // Assign section (section can be NULL if no seats available)
         const sectionResult = await assignSection(input.school, input.grade, input.gender);
-        if (!sectionResult.success) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: sectionResult.message });
-        }
+        // Don't throw error - section assignment is now optional
 
         // Check if seat should be reserved
         const shouldReserve = shouldReserveSeat(
@@ -151,15 +149,15 @@ export const appRouter = router({
           input.jeelPay
         );
 
-        // Create student
-        const newStudent = await db.insert(students).values({
+        // Create student and get the insert result with insertId
+        const insertResult = await db.insert(students).values({
           studentId: input.studentId,
           name: input.name,
           gender: input.gender,
           nationality: input.nationality,
           school: input.school,
           grade: input.grade,
-          section: sectionResult.section,
+          section: sectionResult.section || null,
           studentType: input.studentType,
           paymentStatus: input.paymentStatus,
           paymentMethod: input.paymentMethod,
@@ -173,12 +171,29 @@ export const appRouter = router({
           status: "Registered",
         });
 
-        // Reserve seat if needed
-        if (shouldReserve) {
-          await reserveSeat(input.school, input.grade, sectionResult.section!);
+        // Reserve seat if needed and section is assigned
+        if (shouldReserve && sectionResult?.section) {
+          await reserveSeat(input.school, input.grade, sectionResult.section);
         }
 
-        return newStudent;
+        // Return with insertId for dynamic fields save on frontend
+        // Drizzle returns insertId directly from the insert result
+        console.log('Insert result:', JSON.stringify(insertResult, null, 2));
+        const id = (insertResult as any)?.insertId || (insertResult as any)?.[0]?.id;
+        console.log('Extracted ID:', id);
+        
+        // If still no ID, query the database to get the last inserted ID
+        let finalId = id;
+        if (!finalId) {
+          const lastStudent = await db.select({ id: students.id }).from(students).where(eq(students.studentId, input.studentId)).limit(1);
+          finalId = lastStudent?.[0]?.id;
+          console.log('Queried ID from database:', finalId);
+        }
+        
+        return {
+          insertId: finalId,
+          success: true
+        };
       }),
 
     // Update student
@@ -646,6 +661,48 @@ export const appRouter = router({
     getLowAvailabilitySeats: publicProcedure.query(async () => {
       const { getLowAvailabilitySeats } = await import("./seatCalculations");
       return await getLowAvailabilitySeats();
+    }),
+
+    getAlerts: adminProcedure.query(async () => {
+      const db = await getDb();
+
+      // ── Low-seat alerts (available ≤ 3) ──
+      let lowSeatAlerts: { school: string; grade: string; section: string; available: number; capacity: number }[] = [];
+      try {
+        const { getSeatAvailability } = await import("./seatCalculations");
+        const result = await getSeatAvailability();
+        if (result.success) {
+          lowSeatAlerts = (result.seats as any[])
+            .filter((s: any) => s.available <= 3 && s.capacity > 0)
+            .map((s: any) => ({
+              school: s.school, grade: s.grade, section: s.section,
+              available: s.available, capacity: s.capacity,
+            }));
+        }
+      } catch (_) {}
+
+      // ── Incomplete file alerts ──
+      let incompleteFiles: { id: number; name: string; studentId: string; school: string; grade: string }[] = [];
+      if (db) {
+        try {
+          const rows = await db
+            .select({
+              id: students.id, name: students.name,
+              studentId: students.studentId,
+              school: students.school, grade: students.grade,
+            })
+            .from(students)
+            .where(eq(students.fileComplete, false))
+            .limit(50);
+          incompleteFiles = rows;
+        } catch (_) {}
+      }
+
+      return {
+        lowSeatAlerts,
+        incompleteFiles,
+        totalCount: lowSeatAlerts.length + incompleteFiles.length,
+      };
     }),
   }),
 });

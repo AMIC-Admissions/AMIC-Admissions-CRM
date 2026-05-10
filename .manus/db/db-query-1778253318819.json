@@ -1,0 +1,127 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'students' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "studentId"
+    },
+    {
+      "COLUMN_NAME": "name"
+    },
+    {
+      "COLUMN_NAME": "gender"
+    },
+    {
+      "COLUMN_NAME": "nationality"
+    },
+    {
+      "COLUMN_NAME": "school"
+    },
+    {
+      "COLUMN_NAME": "grade"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "registrationDate"
+    },
+    {
+      "COLUMN_NAME": "paymentStatus"
+    },
+    {
+      "COLUMN_NAME": "paymentMethod"
+    },
+    {
+      "COLUMN_NAME": "fileComplete"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "section"
+    },
+    {
+      "COLUMN_NAME": "studentType"
+    },
+    {
+      "COLUMN_NAME": "seatReserved"
+    },
+    {
+      "COLUMN_NAME": "dateOfBirth"
+    },
+    {
+      "COLUMN_NAME": "dateOfJoin"
+    },
+    {
+      "COLUMN_NAME": "assessed"
+    },
+    {
+      "COLUMN_NAME": "passed"
+    },
+    {
+      "COLUMN_NAME": "reAssessment"
+    },
+    {
+      "COLUMN_NAME": "passedRe"
+    },
+    {
+      "COLUMN_NAME": "registration"
+    },
+    {
+      "COLUMN_NAME": "enrollment"
+    },
+    {
+      "COLUMN_NAME": "transfer"
+    },
+    {
+      "COLUMN_NAME": "firstInstallment"
+    },
+    {
+      "COLUMN_NAME": "secondInstallment"
+    },
+    {
+      "COLUMN_NAME": "fullPayment"
+    },
+    {
+      "COLUMN_NAME": "promissoryNote"
+    },
+    {
+      "COLUMN_NAME": "tamara"
+    },
+    {
+      "COLUMN_NAME": "jeelPay"
+    },
+    {
+      "COLUMN_NAME": "docsSigned"
+    },
+    {
+      "COLUMN_NAME": "requirementsSubmitted"
+    },
+    {
+      "COLUMN_NAME": "fatherId"
+    },
+    {
+      "COLUMN_NAME": "fatherMobile"
+    },
+    {
+      "COLUMN_NAME": "motherId"
+    },
+    {
+      "COLUMN_NAME": "motherMobile"
+    },
+    {
+      "COLUMN_NAME": "notes"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nstudentId\nname\ngender\nnationality\nschool\ngrade\nstatus\nregistrationDate\npaymentStatus\npaymentMethod\nfileComplete\ncreatedAt\nupdatedAt\nsection\nstudentType\nseatReserved\ndateOfBirth\ndateOfJoin\nassessed\npassed\nreAssessment\npassedRe\nregistration\nenrollment\ntransfer\nfirstInstallment\nsecondInstallment\nfullPayment\npromissoryNote\ntamara\njeelPay\ndocsSigned\nrequirementsSubmitted\nfatherId\nfatherMobile\nmotherId\nmotherMobile\nnotes\n",
+  "stderr": "",
+  "execution_time_ms": 1963
+}

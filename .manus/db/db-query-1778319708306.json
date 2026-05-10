@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM student_dynamic_data WHERE student_id = 180002",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT * FROM student_dynamic_data WHERE student_id = 180002",
+  "rows": [
+    {
+      "id": "30001",
+      "student_id": "180002",
+      "field_key": "gender",
+      "value": "Female",
+      "createdAt": "2026-05-09 09:41:12",
+      "updatedAt": "2026-05-09 09:41:12"
+    },
+    {
+      "id": "30002",
+      "student_id": "180002",
+      "field_key": "nationality",
+      "value": "Saudi",
+      "createdAt": "2026-05-09 09:41:12",
+      "updatedAt": "2026-05-09 09:41:12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstudent_id\tfield_key\tvalue\tcreatedAt\tupdatedAt\n30001\t180002\tgender\tFemale\t2026-05-09 09:41:12\t2026-05-09 09:41:12\n30002\t180002\tnationality\tSaudi\t2026-05-09 09:41:12\t2026-05-09 09:41:12\n",
+  "stderr": "",
+  "execution_time_ms": 1870
+}

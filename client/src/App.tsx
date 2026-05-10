@@ -62,9 +62,13 @@ function Router() {
 }
 
 function App() {
+  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+  const defaultTheme = storedTheme ?? (systemPrefersDark ? "dark" : "light");
+
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme={defaultTheme} switchable={true}>
         <TooltipProvider>
           <Toaster />
           <Router />

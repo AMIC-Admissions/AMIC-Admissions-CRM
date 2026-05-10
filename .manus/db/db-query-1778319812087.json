@@ -1,0 +1,15 @@
+{
+  "query": "SELECT field_key, field_label, options FROM fields_config WHERE field_key = 'transportation';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT field_key, field_label, options FROM fields_config WHERE field_key = 'transportation';",
+  "rows": [
+    {
+      "field_key": "transportation",
+      "field_label": "Transportation",
+      "options": "[{\"label\": \"Bus\", \"value\": \"Bus\"}, {\"label\": \"Car\", \"value\": \"Car\"}]"
+    }
+  ],
+  "messages": [],
+  "stdout": "field_key\tfield_label\toptions\ntransportation\tTransportation\t[{\"label\": \"Bus\", \"value\": \"Bus\"}, {\"label\": \"Car\", \"value\": \"Car\"}]\n",
+  "stderr": "",
+  "execution_time_ms": 1907
+}

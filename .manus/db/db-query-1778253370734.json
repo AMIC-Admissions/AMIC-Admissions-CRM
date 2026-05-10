@@ -1,0 +1,19 @@
+{
+  "query": "SELECT DISTINCT studentType FROM students;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2LawzbWUv3q5KSs.root --database czboBtjRk2tBaneRxMQWJX --execute SELECT DISTINCT studentType FROM students;",
+  "rows": [
+    {
+      "studentType": "Re-Registration"
+    },
+    {
+      "studentType": "Enrollment"
+    },
+    {
+      "studentType": "New"
+    }
+  ],
+  "messages": [],
+  "stdout": "studentType\nRe-Registration\nEnrollment\nNew\n",
+  "stderr": "",
+  "execution_time_ms": 1874
+}
