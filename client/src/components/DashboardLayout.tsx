@@ -251,6 +251,7 @@ function DashboardLayoutContent({
       <SidebarInset>
         {isMobile && (
           <div className="flex border-b border-white/10 h-14 items-center justify-between bg-[#061f5c]/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+            <GlobalSearch />
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
               <div className="flex items-center gap-3">
