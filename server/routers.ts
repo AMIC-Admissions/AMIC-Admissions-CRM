@@ -662,6 +662,48 @@ export const appRouter = router({
       const { getLowAvailabilitySeats } = await import("./seatCalculations");
       return await getLowAvailabilitySeats();
     }),
+
+    getAlerts: adminProcedure.query(async () => {
+      const db = await getDb();
+
+      // ── Low-seat alerts (available ≤ 3) ──
+      let lowSeatAlerts: { school: string; grade: string; section: string; available: number; capacity: number }[] = [];
+      try {
+        const { getSeatAvailability } = await import("./seatCalculations");
+        const result = await getSeatAvailability();
+        if (result.success) {
+          lowSeatAlerts = (result.seats as any[])
+            .filter((s: any) => s.available <= 3 && s.capacity > 0)
+            .map((s: any) => ({
+              school: s.school, grade: s.grade, section: s.section,
+              available: s.available, capacity: s.capacity,
+            }));
+        }
+      } catch (_) {}
+
+      // ── Incomplete file alerts ──
+      let incompleteFiles: { id: number; name: string; studentId: string; school: string; grade: string }[] = [];
+      if (db) {
+        try {
+          const rows = await db
+            .select({
+              id: students.id, name: students.name,
+              studentId: students.studentId,
+              school: students.school, grade: students.grade,
+            })
+            .from(students)
+            .where(eq(students.fileComplete, false))
+            .limit(50);
+          incompleteFiles = rows;
+        } catch (_) {}
+      }
+
+      return {
+        lowSeatAlerts,
+        incompleteFiles,
+        totalCount: lowSeatAlerts.length + incompleteFiles.length,
+      };
+    }),
   }),
 });
 

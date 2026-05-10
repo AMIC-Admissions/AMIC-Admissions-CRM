@@ -365,14 +365,14 @@
 
 
 ### CRITICAL BUG: Dynamic Fields Not Rendering in Add/Edit Form
-- [ ] Debug: DynamicFieldsSection not rendering in Students.tsx Add/Edit form
-- [ ] Fix: Ensure DynamicFieldsSection is properly integrated into form JSX
-- [ ] Fix: Verify dynamicValues state is properly updated when user selects dropdown values
-- [ ] Fix: Implement proper save mechanism for dynamic field values
-- [ ] Fix: Implement proper load mechanism for dynamic field values on edit
-- [ ] Test: Add field in fields_config, verify it appears in form
-- [ ] Test: Select value from dropdown, save, reload, verify value persists
-- [ ] Test: Edit student, verify dynamic field values pre-fill correctly
+- [x] Debug: DynamicFieldsSection not rendering in Students.tsx Add/Edit form
+- [x] Fix: Ensure DynamicFieldsSection is properly integrated into form JSX
+- [x] Fix: Verify dynamicValues state is properly updated when user selects dropdown values
+- [x] Fix: Implement proper save mechanism for dynamic field values
+- [x] Fix: Implement proper load mechanism for dynamic field values on edit
+- [x] Test: Add field in fields_config, verify it appears in form
+- [x] Test: Select value from dropdown, save, reload, verify value persists
+- [x] Test: Edit student, verify dynamic field values pre-fill correctly
 
 
 ## CRITICAL FIXES (Current Sprint)
@@ -382,7 +382,7 @@
 - [x] Guard reserveSeat/releaseSeat calls when section is NULL
 - [x] Fix DynamicFieldsSection to render ALWAYS (remove form.id condition)
 - [x] Fix createStudent mutation to save dynamic fields after student creation
-- [ ] **BLOCKER: Student save failing with 500 error - must diagnose and fix**
-- [ ] Ensure dynamic field values load correctly on student edit
-- [ ] Test complete flow: create → save dynamic fields → edit → load dynamic fields
-- [ ] Verify no syntax errors or silent failures in dynamic fields flow
+- [x] **BLOCKER: Student save failing with 500 error - must diagnose and fix**
+- [x] Ensure dynamic field values load correctly on student edit
+- [x] Test complete flow: create → save dynamic fields → edit → load dynamic fields
+- [x] Verify no syntax errors or silent failures in dynamic fields flow

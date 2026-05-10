@@ -21,11 +21,14 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { GraduationCap, LayoutDashboard, LogOut, PanelLeft, Users, FileText } from "lucide-react";
+import { GraduationCap, LayoutDashboard, LogOut, Moon, PanelLeft, Sun, Users, FileText } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { useTheme } from "@/contexts/ThemeContext";
+import { GlobalSearch } from "./GlobalSearch";
+import { NotificationBell } from "./NotificationBell";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Admissions Dashboard", path: "/", id: "dashboard" },
