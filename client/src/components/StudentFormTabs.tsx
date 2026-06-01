@@ -341,6 +341,7 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
                     </SelectTrigger>
                     <SelectContent className="border-slate-600 bg-slate-700">
                       <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Partial">Partial</SelectItem>
                       <SelectItem value="Paid">Paid</SelectItem>
                     </SelectContent>
                   </Select>
@@ -353,6 +354,8 @@ export function StudentFormTabs({ formData, onFormChange, onSubmit, isLoading = 
                     </SelectTrigger>
                     <SelectContent className="border-slate-600 bg-slate-700">
                       <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
                       <SelectItem value="Tamara">Tamara</SelectItem>
                       <SelectItem value="JeelPay">JeelPay</SelectItem>
                       <SelectItem value="Promissory Note">Promissory Note</SelectItem>

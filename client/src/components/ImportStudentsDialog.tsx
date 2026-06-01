@@ -23,6 +23,11 @@ interface ImportRow {
   promissoryNote?: boolean;
   tamara?: boolean;
   jeelPay?: boolean;
+  docsSigned?: boolean;
+  requirementsSubmitted?: boolean;
+  fatherMobile?: string;
+  motherMobile?: string;
+  status?: string;
   error?: string;
   rowNumber?: number;
 }
@@ -83,6 +88,11 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
           promissoryNote: parseBoolean(row["Promissory Note"] || row.promissoryNote || false),
           tamara: parseBoolean(row.Tamara || row.tamara || false),
           jeelPay: parseBoolean(row["Jeel Pay"] || row.jeelPay || false),
+          docsSigned: parseBoolean(row["Docs Signed"] || row.docsSigned || false),
+          requirementsSubmitted: parseBoolean(row["Requirements Submitted"] || row.requirementsSubmitted || false),
+          fatherMobile: row["Father Mobile"] || row.fatherMobile || "",
+          motherMobile: row["Mother Mobile"] || row.motherMobile || "",
+          status: row.Status || row.status || "Registered",
           rowNumber: index + 2,
         };
 
@@ -138,8 +148,16 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
           let paymentMethodValue = "Cash";
           if (row.paymentMethod) {
             const method = String(row.paymentMethod).trim();
-            if (["Bank Transfer", "Card", "Tamara", "JeelPay"].includes(method)) {
+            if (["Cash", "Bank Transfer", "Card", "Tamara", "JeelPay", "Promissory Note"].includes(method)) {
               paymentMethodValue = method;
+            }
+          }
+
+          let paymentStatusValue = "Pending";
+          if (row.paymentStatus) {
+            const status = String(row.paymentStatus).trim();
+            if (["Paid", "Pending", "Partial"].includes(status)) {
+              paymentStatusValue = status;
             }
           }
 
@@ -151,14 +169,19 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             school: row.school!,
             grade: row.grade!,
             studentType: studentTypeValue as any,
-            paymentStatus: (row.paymentStatus as "Paid" | "Pending") || "Pending",
+            paymentStatus: paymentStatusValue as any,
             paymentMethod: paymentMethodValue as any,
+            status: (row.status as any) || "Registered",
             firstInstallment: row.firstInstallment || false,
             secondInstallment: row.secondInstallment || false,
             fullPayment: row.fullPayment || false,
             promissoryNote: row.promissoryNote || false,
             tamara: row.tamara || false,
             jeelPay: row.jeelPay || false,
+            docsSigned: row.docsSigned || false,
+            requirementsSubmitted: row.requirementsSubmitted || false,
+            fatherMobile: row.fatherMobile,
+            motherMobile: row.motherMobile,
           });
           successCount++;
         } catch (error) {
@@ -219,7 +242,7 @@ export function ImportStudentsDialog({ open, onOpenChange, onSuccess }: ImportSt
             </div>
             <div className="text-xs text-white/50">
               <p className="font-semibold">Required columns: Name, Student ID, School, Grade</p>
-              <p>Optional: Gender, Nationality, Student Type, Payment Status, Payment Method</p>
+              <p>Optional: Gender, Nationality, Student Type, Status, Payment Status, Payment Method, Father Mobile, Mother Mobile</p>
               <p>Payment fields (Yes/No or True/False): 1st Installment, 2nd Installment, Full Payment, Promissory Note, Tamara, Jeel Pay</p>
             </div>
           </div>

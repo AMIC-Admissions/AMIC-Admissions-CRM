@@ -6,9 +6,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
+import { ReportsSkeleton } from "@/components/PageSkeletons";
+import { SchoolComparison } from "@/components/SchoolComparison";
+import { AtRiskReport } from "@/components/AtRiskReport";
+import { ScheduledReports } from "@/components/ScheduledReports";
 import { exportReportToPDF } from "@/lib/exportPDF";
 import { exportReportToExcel } from "@/lib/exportExcel";
-import { ChevronDown, Download, FileText, Filter } from "lucide-react";
+import { AlertTriangle, Building2, ChevronDown, Download, FileText, Filter, Mail } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { FIELD_LABELS, QUICK_FILTERS, ReportFieldOption } from "@shared/reportTypes";
@@ -117,6 +121,7 @@ export default function Reports() {
   const [lang, setLang] = useState<Lang>("en");
   const t = translations[lang];
   const isAdmin = user?.role === "admin";
+  const [activeTab, setActiveTab] = useState<"custom" | "comparison" | "at-risk" | "scheduled">("custom");
 
   // Filters state
   const [filters, setFilters] = useState<Record<string, any>>({});
@@ -139,10 +144,14 @@ export default function Reports() {
   });
 
   // Queries
-  const filterOptions = trpc.admissions.getReportFilterOptions.useQuery(undefined);
+  // filter options are static — cache for 10 min, skip refetch on focus
+  const filterOptions = trpc.admissions.getReportFilterOptions.useQuery(undefined, {
+    staleTime: 600_000, gcTime: 1_800_000, refetchOnWindowFocus: false,
+  });
+  // report results are on-demand only (enabled: false until user clicks Generate)
   const reportQuery = trpc.admissions.generateReport.useQuery(
     { filters, selectedFields, limit: 1000 },
-    { enabled: false }
+    { enabled: false, staleTime: 0 }
   );
 
   const handleGenerateReport = async () => {
@@ -202,6 +211,10 @@ export default function Reports() {
     );
   }
 
+  if (filterOptions.isLoading) {
+    return <ReportsSkeleton />;
+  }
+
   return (
     <div className="blueprint-bg min-h-screen" dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
       <div className="container space-y-6 py-6 sm:py-8">
@@ -221,7 +234,63 @@ export default function Reports() {
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
+        {/* Tab bar */}
+        <div className="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10 w-fit">
+          <button
+            onClick={() => setActiveTab("custom")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "custom"
+                ? "bg-cyan-200 text-[#031844]"
+                : "text-white/50 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            Custom Report
+          </button>
+          <button
+            onClick={() => setActiveTab("comparison")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "comparison"
+                ? "bg-cyan-200 text-[#031844]"
+                : "text-white/50 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <Building2 className="h-4 w-4" />
+            School Comparison
+          </button>
+          <button
+            onClick={() => setActiveTab("at-risk")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "at-risk"
+                ? "bg-amber-300 text-[#031844]"
+                : "text-white/50 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <AlertTriangle className="h-4 w-4" />
+            At-Risk Students
+          </button>
+          <button
+            onClick={() => setActiveTab("scheduled")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "scheduled"
+                ? "bg-emerald-300 text-[#031844]"
+                : "text-white/50 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <Mail className="h-4 w-4" />
+            Scheduled Reports
+          </button>
+        </div>
+
+        {/* School Comparison tab */}
+        {activeTab === "comparison" && <SchoolComparison />}
+
+        {activeTab === "at-risk" && <AtRiskReport />}
+
+        {activeTab === "scheduled" && <ScheduledReports />}
+
+        {/* Custom Report tab */}
+        {activeTab === "custom" && <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
           {/* Filters Panel */}
           <Card className="technical-panel text-white h-fit">
             <CardHeader>
@@ -292,7 +361,7 @@ export default function Reports() {
               >
                 <FilterSelect
                   label={t.paymentStatus}
-                  options={["Pending", "Paid"]}
+                  options={["Pending", "Partial", "Paid"]}
                   value={filters.paymentStatus || ""}
                   onChange={(val) => setFilters({ ...filters, paymentStatus: val || undefined })}
                 />
@@ -387,7 +456,16 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 {reportQuery.isLoading ? (
-                  <div className="flex items-center justify-center py-8 text-white/70">{t.loading}</div>
+                  <div className="space-y-px">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="flex gap-4 border-b border-white/[0.06] px-4 py-3"
+                        style={{ opacity: 1 - i * 0.12 }}>
+                        {Array.from({ length: 6 }).map((_, j) => (
+                          <div key={j} className="flex-1 h-3 bg-white/10 animate-pulse rounded" />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 ) : reportQuery.data && reportQuery.data.data.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[800px] border-collapse text-sm">
@@ -468,7 +546,7 @@ export default function Reports() {
               </Card>
             )}
           </div>
-        </div>
+        </div>} {/* end custom tab */}
       </div>
     </div>
   );

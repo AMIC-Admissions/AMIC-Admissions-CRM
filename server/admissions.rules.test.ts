@@ -52,9 +52,9 @@ function assertSeatAvailableForEnrollment(availableSeats: number): void {
 }
 
 function assertPaymentMethod(method: string): void {
-  const validMethods = ["Cash", "Tamara", "JeelPay", "Promissory Note"];
+  const validMethods = ["Cash", "Bank Transfer", "Card", "Tamara", "JeelPay", "Promissory Note"];
   if (!validMethods.includes(method)) {
-    throw new Error(`Invalid payment method: must be Cash, Tamara, or JeelPay`);
+    throw new Error(`Invalid payment method: must be Cash, Bank Transfer, Card, Tamara, JeelPay, or Promissory Note`);
   }
 }
 
@@ -73,12 +73,14 @@ describe("admissions business rules", () => {
     expect(() => assertSeatAvailableForEnrollment(-2)).toThrow(/no seats are available/i);
   });
 
-  it("restricts payment methods to Cash, Tamara, and JeelPay", () => {
+  it("accepts the configured payment methods", () => {
     expect(() => assertPaymentMethod("Cash")).not.toThrow();
+    expect(() => assertPaymentMethod("Bank Transfer")).not.toThrow();
+    expect(() => assertPaymentMethod("Card")).not.toThrow();
     expect(() => assertPaymentMethod("Tamara")).not.toThrow();
     expect(() => assertPaymentMethod("JeelPay")).not.toThrow();
     expect(() => assertPaymentMethod("Promissory Note")).not.toThrow();
-    expect(() => assertPaymentMethod("Bank Transfer")).toThrow(/Cash, Tamara, or JeelPay/i);
+    expect(() => assertPaymentMethod("Cheque")).toThrow(/Bank Transfer/i);
   });
 });
 
@@ -101,7 +103,7 @@ describe("admissions authorization", () => {
         grade: "Grade 1",
         registrationDate: new Date(),
         paymentStatus: "Pending",
-        paymentMethod: "Bank Transfer" as "Cash",
+        paymentMethod: "Cheque" as "Cash",
         fileComplete: false,
       }),
     ).rejects.toThrow();

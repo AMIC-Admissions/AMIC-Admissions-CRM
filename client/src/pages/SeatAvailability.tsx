@@ -3,6 +3,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SeatAvailabilitySkeleton } from "@/components/PageSkeletons";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +94,10 @@ export default function SeatAvailability() {
   if (!user) return null;
 
   // Fetch real seat availability data from backend (using public procedure with fallback)
-  const { data: seatData, isLoading, isError } = trpc.admin.getSeatAvailability.useQuery();
+  const { data: seatData, isLoading, isError } = trpc.admin.getSeatAvailability.useQuery(
+    undefined,
+    { staleTime: 120_000, gcTime: 600_000 }
+  );
 
   // Use real data from backend, or empty array if loading/error
   const allSeats = useMemo(() => {
@@ -165,13 +169,7 @@ export default function SeatAvailability() {
   };
 
   if (isLoading) {
-    return (
-      <div className="blueprint-bg min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-white text-lg">{t.loading}</div>
-        </div>
-      </div>
-    );
+    return <SeatAvailabilitySkeleton />;
   }
 
   return (

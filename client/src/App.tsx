@@ -13,6 +13,7 @@ import { AdminDataFix } from "./pages/AdminDataFix";
 import { AdminSeatMaster } from "./pages/AdminSeatMaster";
 import Students from "./pages/Students";
 import { Users } from "./pages/Users";
+import AuditLog from "./pages/AuditLog";
 
 function Router() {
   return (
@@ -40,6 +41,11 @@ function Router() {
       <Route path="/users" key="users">
         <DashboardLayout>
           <Users />
+        </DashboardLayout>
+      </Route>
+      <Route path="/audit-log" key="audit-log">
+        <DashboardLayout>
+          <AuditLog />
         </DashboardLayout>
       </Route>
       <Route path="/admin/migration" key="admin-migration">

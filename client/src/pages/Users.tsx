@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Edit2, Plus, Trash2, X, Search, CheckCircle2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { UsersSkeleton } from "@/components/PageSkeletons";
 
 type Role = "admin" | "user";
 
@@ -36,9 +37,9 @@ export function Users() {
   const isAdmin = user?.role === "admin";
   const utils = trpc.useUtils();
 
-  // Fetch users list
+  // Fetch users list — live data, 30 s stale
   const users_list = trpc.system.listUsers.useQuery(undefined, {
-    enabled: isAdmin,
+    enabled: isAdmin, staleTime: 30_000, gcTime: 300_000,
   });
 
   const filteredUsers = useMemo(() => {
@@ -147,6 +148,10 @@ export function Users() {
     );
   }
 
+  if (users_list.isLoading) {
+    return <UsersSkeleton />;
+  }
+
   return (
     <div className="blueprint-bg min-h-screen">
       <div className="container space-y-6 py-6 sm:py-8">
@@ -193,7 +198,16 @@ export function Users() {
           </CardHeader>
           <CardContent className="p-0">
             {users_list.isLoading ? (
-              <div className="p-8 text-center text-white/75">Loading users...</div>
+              <div className="space-y-px">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex gap-4 border-b border-white/[0.06] px-6 py-4"
+                    style={{ opacity: 1 - i * 0.15 }}>
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <div key={j} className="flex-1 h-3 bg-white/10 animate-pulse rounded" />
+                    ))}
+                  </div>
+                ))}
+              </div>
             ) : users_list.isError ? (
               <div className="p-8 text-center text-red-200">Failed to load users</div>
             ) : filteredUsers.length === 0 ? (

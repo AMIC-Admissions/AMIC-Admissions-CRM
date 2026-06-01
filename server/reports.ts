@@ -214,8 +214,8 @@ export async function getReportFilterOptions() {
       genders: ["Male", "Female"],
       statuses: ["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"],
       studentTypes: ["New", "Re-Registration", "Enrollment"],
-      paymentStatuses: ["Pending", "Paid"],
-      paymentMethods: ["Cash", "Tamara", "JeelPay", "Promissory Note"],
+      paymentStatuses: ["Pending", "Partial", "Paid"],
+      paymentMethods: ["Cash", "Bank Transfer", "Card", "Tamara", "JeelPay", "Promissory Note"],
     };
   } catch (error) {
     console.error("[Reports] Error getting filter options:", error);

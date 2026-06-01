@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,13 +15,16 @@ interface DynamicFieldsSectionProps {
 export function DynamicFieldsSection({ studentId, values = {}, onChange }: DynamicFieldsSectionProps) {
   const [localValues, setLocalValues] = useState<Record<string, string | null>>(values);
 
-  // Fetch field configurations
-  const { data: fieldsConfig, isLoading: fieldsLoading } = trpc.dynamicFields.listFieldsConfig.useQuery();
+  // field config rarely changes — cache 10 min
+  const { data: fieldsConfig, isLoading: fieldsLoading } = trpc.dynamicFields.listFieldsConfig.useQuery(
+    undefined,
+    { staleTime: 600_000, gcTime: 1_800_000, refetchOnWindowFocus: false }
+  );
 
-  // Fetch existing dynamic field values if editing
+  // per-student dynamic values — 30 s stale
   const { data: existingValues, isLoading: valuesLoading } = trpc.dynamicFields.getDynamicFieldValues.useQuery(
     { studentId: studentId || 0 },
-    { enabled: !!studentId }
+    { enabled: !!studentId, staleTime: 30_000, gcTime: 300_000 }
   );
 
   // Update local values when existing values are loaded
@@ -134,35 +137,18 @@ export function DynamicFieldsSection({ studentId, values = {}, onChange }: Dynam
                   )}
 
                   {field.fieldType === "select" && field.options && (
-                    <select
-                      id={field.fieldKey}
-                      value={value || ""}
-                      onChange={(e) => handleFieldChange(field.fieldKey, e.target.value)}
-                      required={isRequired}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">{`Select ${field.fieldLabel.toLowerCase()}`}</option>
-                      {(() => {
-                        try {
-                          const options = typeof field.options === 'string' ? JSON.parse(field.options) : field.options;
-                          if (Array.isArray(options)) {
-                            return options.map((option: any) => {
-                              const optionValue = typeof option === 'string' ? option : option.value;
-                              const optionLabel = typeof option === 'string' ? option : option.label || option.value;
-                              return (
-                                <option key={optionValue} value={optionValue}>
-                                  {optionLabel}
-                                </option>
-                              );
-                            });
-                          }
-                          return null;
-                        } catch (e) {
-                          console.error('Failed to parse options:', e);
-                          return null;
-                        }
-                      })()}
-                    </select>
+                    <Select value={value || ""} onValueChange={(v) => handleFieldChange(field.fieldKey, v)}>
+                      <SelectTrigger id={field.fieldKey}>
+                        <SelectValue placeholder={`Select ${field.fieldLabel.toLowerCase()}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options.map((option: any) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </div>
               );
