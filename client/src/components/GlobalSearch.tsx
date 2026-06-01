@@ -30,19 +30,17 @@ export function GlobalSearch() {
   const [, setLocation]             = useLocation();
   const inputRef  = useRef<HTMLInputElement>(null);
   const panelRef  = useRef<HTMLDivElement>(null);
-  const timerRef  = useRef<any>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   /* ── debounce ── */
   useEffect(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    clearTimeout(timerRef.current);
     if (query.trim().length >= 2) {
       timerRef.current = setTimeout(() => setDebouncedQ(query.trim()), 300);
     } else {
       setDebouncedQ("");
     }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    return () => clearTimeout(timerRef.current);
   }, [query]);
 
   /* ── search — fresh results, short cache ── */

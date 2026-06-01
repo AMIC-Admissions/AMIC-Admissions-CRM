@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, decimal, date, json, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -52,12 +52,14 @@ export const seats = mysqlTable("seats", {
   id: int("id").autoincrement().primaryKey(),
   school: varchar("school", { length: 255 }).notNull(),
   grade: varchar("grade", { length: 255 }).notNull(),
-  section: varchar("section", { length: 10 }).notNull(), // A, B, C, D, E, F, etc.
+  section: varchar("section", { length: 10 }).notNull(),
   capacity: int("capacity").notNull(),
   reservedSeats: int("reservedSeats").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  idxSchoolGrade: index("idx_seats_school_grade").on(t.school, t.grade),
+}));
 
 export type Seat = typeof seats.$inferSelect;
 export type InsertSeat = typeof seats.$inferInsert;
@@ -122,17 +124,80 @@ export const students = mysqlTable("students", {
 
   // LEGACY FIELDS (for backward compatibility)
   status: mysqlEnum("status", ["Registered", "Assessed", "Passed", "Enrolled", "Withdrawn"]).default("Registered").notNull(),
-  paymentStatus: mysqlEnum("paymentStatus", ["Pending", "Paid"]).default("Pending").notNull(),
-  paymentMethod: mysqlEnum("paymentMethod", ["Cash", "Tamara", "JeelPay", "Promissory Note"]),
+  paymentStatus: mysqlEnum("paymentStatus", ["Pending", "Partial", "Paid"]).default("Pending").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", ["Cash", "Bank Transfer", "Card", "Tamara", "JeelPay", "Promissory Note"]),
 
   // TIMESTAMPS
   registrationDate: timestamp("registrationDate").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // Single-column: most common WHERE filters
+  idxSchool:            index("idx_students_school").on(t.school),
+  idxGrade:             index("idx_students_grade").on(t.grade),
+  idxStatus:            index("idx_students_status").on(t.status),
+  idxSeatReserved:      index("idx_students_seat_reserved").on(t.seatReserved),
+  idxFileComplete:      index("idx_students_file_complete").on(t.fileComplete),
+  idxPaymentStatus:     index("idx_students_payment_status").on(t.paymentStatus),
+  idxRegistrationDate:  index("idx_students_registration_date").on(t.registrationDate),
+
+  // Composite: (school, grade) — most common filter pair; also covers school-only
+  idxSchoolGrade:       index("idx_students_school_grade").on(t.school, t.grade),
+
+  // Composite: exact pattern used in seatCalculations COUNT(*) per section
+  idxSeatLookup:        index("idx_students_seat_lookup").on(t.school, t.grade, t.section, t.seatReserved),
+}));
 
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = typeof students.$inferInsert;
+
+/**
+ * Audit log — immutable record of every student create/update/delete.
+ */
+export const auditLog = mysqlTable("audit_log", {
+  id:            int("id").autoincrement().primaryKey(),
+  action:        mysqlEnum("action", ["create", "update", "delete"]).notNull(),
+  studentId:     int("student_id"),
+  studentName:   varchar("student_name", { length: 255 }),
+  studentSid:    varchar("student_sid",  { length: 50 }),
+  performedBy:   int("performed_by"),
+  performedName: varchar("performed_name", { length: 255 }),
+  changes:       json("changes").$type<Record<string, [unknown, unknown]>>(),
+  snapshot:      json("snapshot"),
+  ip:            varchar("ip", { length: 64 }),
+  createdAt:     timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+  idxStudent: index("idx_audit_student").on(t.studentId),
+  idxAction:  index("idx_audit_action").on(t.action),
+  idxUser:    index("idx_audit_user").on(t.performedBy),
+  idxDate:    index("idx_audit_date").on(t.createdAt),
+}));
+
+export type AuditLogEntry = typeof auditLog.$inferSelect;
+
+/**
+ * Report schedules — automated email delivery configuration.
+ */
+export const reportSchedules = mysqlTable("report_schedules", {
+  id:          int("id").autoincrement().primaryKey(),
+  name:        varchar("name", { length: 120 }).notNull(),
+  frequency:   mysqlEnum("frequency", ["daily", "weekly"]).default("daily").notNull(),
+  dayOfWeek:   int("day_of_week"),          // 0=Sun … 6=Sat, null = every day
+  hour:        int("hour").default(7).notNull(), // UTC hour 0-23
+  recipients:  json("recipients").notNull().$type<string[]>(),
+  reportType:  mysqlEnum("report_type", ["summary", "at_risk", "school_comparison", "full"]).default("summary").notNull(),
+  filters:     json("filters").$type<{ school?: string; grade?: string }>(),
+  isActive:    boolean("is_active").default(true).notNull(),
+  lastSentAt:  timestamp("last_sent_at"),
+  createdBy:   int("created_by"),
+  createdAt:   timestamp("created_at").defaultNow().notNull(),
+  updatedAt:   timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (t) => ({
+  idxActive:    index("idx_schedules_active").on(t.isActive),
+  idxFrequency: index("idx_schedules_frequency").on(t.frequency, t.dayOfWeek, t.hour),
+}));
+
+export type ReportSchedule = typeof reportSchedules.$inferSelect;
 
 /**
  * Report templates table for saving custom report configurations.
@@ -158,14 +223,17 @@ export type InsertReportTemplate = typeof reportTemplates.$inferInsert;
  */
 export const seatMaster = mysqlTable("seat_master", {
   id: int("id").autoincrement().primaryKey(),
-  school: varchar("school", { length: 100 }).notNull(), // Kids Gate, AMIS Girls, AMIS Boys
-  grade: varchar("grade", { length: 50 }).notNull(), // Pre-KG, KG I, KG II, Grade 1, etc.
-  section: varchar("section", { length: 10 }).notNull(), // A, B, C, D, E, F, Mixed
-  gender: varchar("gender", { length: 20 }).notNull(), // Female, Male, Mixed
-  capacity: int("capacity").notNull(), // Total seats in this section
+  school: varchar("school", { length: 100 }).notNull(),
+  grade: varchar("grade", { length: 50 }).notNull(),
+  section: varchar("section", { length: 10 }).notNull(),
+  gender: varchar("gender", { length: 20 }).notNull(),
+  capacity: int("capacity").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // getSeatAvailability iterates and filters by school+grade
+  idxSchoolGrade: index("idx_seat_master_school_grade").on(t.school, t.grade),
+}));
 
 export type SeatMaster = typeof seatMaster.$inferSelect;
 export type InsertSeatMaster = typeof seatMaster.$inferInsert;
@@ -198,12 +266,15 @@ export type InsertFieldsConfig = typeof fieldsConfig.$inferInsert;
  */
 export const studentDynamicData = mysqlTable("student_dynamic_data", {
   id: int("id").autoincrement().primaryKey(),
-  studentId: int("student_id").notNull(), // Foreign key to students table
-  fieldKey: varchar("field_key", { length: 100 }).notNull(), // Reference to fieldsConfig.fieldKey
-  value: text("value"), // The actual value stored as text (can be JSON for complex types)
+  studentId: int("student_id").notNull(),
+  fieldKey: varchar("field_key", { length: 100 }).notNull(),
+  value: text("value"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (t) => ({
+  // getDynamicFieldValues: WHERE student_id=? AND field_key=?
+  idxStudentField: index("idx_dynamic_data_student_field").on(t.studentId, t.fieldKey),
+}));
 
 export type StudentDynamicData = typeof studentDynamicData.$inferSelect;
 export type InsertStudentDynamicData = typeof studentDynamicData.$inferInsert;

@@ -1,5 +1,5 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Bell, Armchair, FileWarning, CheckCheck,
   ChevronRight, RefreshCw, X,
@@ -54,8 +54,8 @@ export function NotificationBell() {
     { enabled: isAdmin, refetchInterval: 60_000, staleTime: 30_000 }
   );
 
-  const lowSeats  = (data?.lowSeatAlerts  ?? []).filter((s: LowSeatAlert) => !dismissed.has(`seat:${s.school}|${s.grade}|${s.section}`));
-  const incFiles  = (data?.incompleteFiles ?? []).filter((f: IncompleteFile) => !dismissed.has(`file:${f.id}`));
+  const lowSeats  = (data?.lowSeatAlerts  ?? []).filter(s => !dismissed.has(`seat:${s.school}|${s.grade}|${s.section}`));
+  const incFiles  = (data?.incompleteFiles ?? []).filter(f => !dismissed.has(`file:${f.id}`));
   const total     = lowSeats.length + incFiles.length;
 
   /* close on outside click */
@@ -77,7 +77,7 @@ export function NotificationBell() {
   }, [lowSeats.length, incFiles.length]);
 
   const dismiss = (key: string) =>
-    setDismissed(prev => new Set(Array.from(prev).concat(key)));
+    setDismissed(prev => new Set([...Array.from(prev), key]));
 
   const lastUpdated = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
@@ -193,7 +193,7 @@ export function NotificationBell() {
                 <EmptyState icon={Armchair} text="All sections have enough seats" />
               ) : (
                 <ul className="p-1.5 space-y-0.5">
-                  {lowSeats.map((s: LowSeatAlert) => {
+                  {lowSeats.map(s => {
                     const c = seatColor(s.available);
                     const key = `seat:${s.school}|${s.grade}|${s.section}`;
                     return (
@@ -239,7 +239,7 @@ export function NotificationBell() {
                 <EmptyState icon={CheckCheck} text="All student files are complete" />
               ) : (
                 <ul className="p-1.5 space-y-0.5">
-                  {incFiles.map((f: IncompleteFile) => {
+                  {incFiles.map(f => {
                     const key = `file:${f.id}`;
                     return (
                       <li key={key}

@@ -62,6 +62,24 @@ export async function applyMigration0004(): Promise<MigrationResult> {
       console.log("[Migration 0004] ℹ studentType enum already updated");
     }
 
+    try {
+      await db.execute(
+        sql`ALTER TABLE students MODIFY COLUMN paymentStatus enum('Pending','Partial','Paid') NOT NULL DEFAULT 'Pending'`
+      );
+      console.log("[Migration 0004] Updated paymentStatus enum");
+    } catch (error: any) {
+      console.log("[Migration 0004] paymentStatus enum already updated");
+    }
+
+    try {
+      await db.execute(
+        sql`ALTER TABLE students MODIFY COLUMN paymentMethod enum('Cash','Bank Transfer','Card','Tamara','JeelPay','Promissory Note')`
+      );
+      console.log("[Migration 0004] Updated paymentMethod enum");
+    } catch (error: any) {
+      console.log("[Migration 0004] paymentMethod enum already updated");
+    }
+
     // Step 3: Add new columns
     console.log("[Migration 0004] Step 3: Adding new columns...");
     const columnsToAdd = [
@@ -111,7 +129,7 @@ export async function applyMigration0004(): Promise<MigrationResult> {
       message: "Migration 0004 applied successfully",
       details: {
         columnsAdded: addedCount,
-        enumsUpdated: 2,
+        enumsUpdated: 4,
       },
     };
   } catch (error: any) {

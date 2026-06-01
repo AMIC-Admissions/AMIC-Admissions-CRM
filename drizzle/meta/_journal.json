@@ -50,6 +50,20 @@
       "when": 1777958546314,
       "tag": "0006_tranquil_smasher",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1746835200000,
+      "tag": "0007_add_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1746921600000,
+      "tag": "0008_report_schedules",
+      "breakpoints": true
     }
   ]
 }
